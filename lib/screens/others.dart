@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'othersdetail/study_academic_page.dart';
+import 'othersdetail/academic_feature.dart';
 import 'othersdetail/mental_health_page.dart';
 import 'othersdetail/leaderboard_page.dart';
 import 'othersdetail/cultural_tech_page.dart';
@@ -9,6 +9,32 @@ class OthersScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // List of menu items with icons and titles
+    final List<Map<String, dynamic>> menuItems = [
+      {
+        'title': 'Study & Academic',
+        'icon': Icons.school,
+        'color': Colors.blue,
+        'page': const AcademicFeature(),
+      },
+      {
+        'title': 'Mental Health & Wellness',
+        'icon': Icons.self_improvement,
+        'color': Colors.green,
+        'page': const MentalHealthPage(),
+      },
+      {
+        'title': 'Leaderboard',
+        'icon': Icons.emoji_events,
+        'color': Colors.orange,
+        'page': const LeaderboardPage(),
+      },
+      {
+        'title': 'Cultural + Tech Society',
+        'icon': Icons.people,
+        'color': Colors.purple,
+        'page': const CulturalTechPage(),
+      },
     final menuItems = [
       {'title': 'Study & Academic', 'icon': Icons.school, 'color': Colors.blue, 'page': const StudyAcademicPage()},
       {'title': 'Mental Health & Wellness', 'icon': Icons.self_improvement, 'color': Colors.green, 'page': const MentalHealthPage()},
