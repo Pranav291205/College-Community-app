@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'post_service.dart';
 
 class AuthService {
   static const String baseUrl = 'https://college-community-app-backend.onrender.com';
+  static String? authToken;
 
   static Future<Map<String, dynamic>> register({
     required String name,
@@ -16,20 +16,14 @@ class AuthService {
     try {
       print('📝 Registering user...');
 
-      String username = email.split('@')[0];
-
       Map<String, dynamic> requestBody = {
         'name': name,
         'email': email,
         'password': password,
         'branch': branch,
         'year': year,
-        'username': username,
+        'interests': interests ?? [],
       };
-
-      if (interests != null && interests.isNotEmpty) {
-        requestBody['interests'] = interests;
-      }
 
       print('📤 Request: ${jsonEncode(requestBody)}');
 
@@ -47,17 +41,30 @@ class AuthService {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
+        
         if (data['token'] != null) {
-          PostService.setAuthToken(data['token']);
+          authToken = data['token'];
+          print('✅ Token stored: $authToken');
         }
-        return {'success': true, 'message': 'Registration successful!', 'data': data};
+
+        return {
+          'success': true,
+          'message': 'Registration successful!',
+          'data': data,
+        };
       } else {
         final error = jsonDecode(response.body);
-        return {'success': false, 'message': error['message'] ?? 'Registration failed'};
+        return {
+          'success': false,
+          'message': error['message'] ?? 'Registration failed',
+        };
       }
     } catch (e) {
       print('❌ Error: $e');
-      return {'success': false, 'message': 'Connection error: $e'};
+      return {
+        'success': false,
+        'message': 'Connection error: $e',
+      };
     }
   }
 
@@ -89,22 +96,39 @@ class AuthService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        
         if (data['token'] != null) {
-          PostService.setAuthToken(data['token']);
+          authToken = data['token'];
+          print('✅ Login successful - Token stored: $authToken');
         }
-        return {'success': true, 'message': 'Login successful!', 'data': data};
+
+        return {
+          'success': true,
+          'message': 'Login successful!',
+          'data': data,
+        };
       } else {
         final error = jsonDecode(response.body);
-        return {'success': false, 'message': error['message'] ?? 'Login failed'};
+        return {
+          'success': false,
+          'message': error['message'] ?? 'Login failed',
+        };
       }
     } catch (e) {
       print('❌ Error: $e');
-      return {'success': false, 'message': 'Connection error: $e'};
+      return {
+        'success': false,
+        'message': 'Connection error: $e',
+      };
     }
   }
 
   static void logout() {
-    PostService.clearAuthToken();
-    print('👋 Logged out');
+    authToken = null;
+    print('👋 Logged out - Token cleared');
+  }
+
+  static String? getAuthToken() {
+    return authToken;
   }
 }
