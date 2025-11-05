@@ -11,117 +11,166 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final postsAsync = ref.watch(postsProvider);
 
-   return Scaffold(
-  appBar: AppBar(
-  elevation: 6,
-  toolbarHeight: 75,
-  centerTitle: true,
-  title: ShaderMask(
-    shaderCallback: (bounds) => const LinearGradient(
-      colors: [Colors.white, Color(0xFFE3F2FD)],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    ).createShader(bounds),
-    child: const Text(
-      'CollabSpace',
-      style: TextStyle(
-        fontWeight: FontWeight.w800,
-        fontSize: 26,
-        letterSpacing: 1.5,
-        color: Colors.white,
-        fontFamily: 'Poppins', // or Montserrat for a modern look
-        shadows: [
-          Shadow(
-            color: Colors.black26,
-            offset: Offset(1, 2),
-            blurRadius: 4,
-          ),
-        ],
-      ),
-    ),
-  ),
-  flexibleSpace: Container(
-    decoration: const BoxDecoration(
-      gradient: LinearGradient(
-        colors: [
-          Color(0xFF1565C0), // Rich blue
-          Color(0xFF42A5F5), // Sky blue
-        ],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
-    ),
-  ),
-  actions: [
-    Padding(
-      padding: const EdgeInsets.only(right: 12),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(40),
-        onTap: () => ref.refresh(postsProvider),
-        child: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.white.withOpacity(0.15),
-            border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                blurRadius: 4,
-                offset: const Offset(2, 2),
-              ),
-            ],
-          ),
-          child: const Icon(
-            Icons.refresh_rounded,
-            color: Colors.white,
-            size: 22,
+    return Scaffold(
+      appBar: AppBar(
+        elevation: 6,
+        toolbarHeight: 75,
+        centerTitle: true,
+        title: ShaderMask(
+          shaderCallback: (bounds) => const LinearGradient(
+            colors: [Colors.white, Color(0xFFE3F2FD)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ).createShader(bounds),
+          child: const Text(
+            'CollabSpace',
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 26,
+              letterSpacing: 1.5,
+              color: Colors.white,
+              fontFamily: 'Poppins',
+              shadows: [
+                Shadow(
+                  color: Colors.black26,
+                  offset: Offset(1, 2),
+                  blurRadius: 4,
+                ),
+              ],
+            ),
           ),
         ),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Color(0xFF1565C0),
+                Color(0xFF42A5F5),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+      
       ),
-    ),
-  ],
-),
 
-
-
-  body: Stack(
-    children: [
-     
-      postsAsync.when(
+     body: Stack(
+  children: [
+    RefreshIndicator(
+      onRefresh: () async {
+        ref.invalidate(postsProvider);
+        await Future.delayed(const Duration(milliseconds: 800));
+      },
+      child: postsAsync.when(
         data: (posts) => posts.isEmpty
-            ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.post_add, size: 64, color: Colors.grey[400]),
-                    const SizedBox(height: 16),
-                    Text('No posts yet', style: TextStyle(fontSize: 18, color: Colors.grey[600], fontWeight: FontWeight.w500)),
-                  ],
-                ),
+            ? ListView(
+                children: [
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.7,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.post_add, size: 64, color: Colors.grey[400]),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No posts yet',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               )
-            : RefreshIndicator(
-                onRefresh: () => ref.refresh(postsProvider).future,
-                child: ListView.builder(
-                  itemCount: posts.length,
-                  itemBuilder: (context, index) => PostCard(post: posts[index]),
-                ),
+            : ListView.builder(
+                itemCount: posts.length,
+                itemBuilder: (context, index) => PostCard(post: posts[index]),
               ),
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(child: _BoldRefreshIcon()),
         error: (err, __) => Center(child: Text('Error: $err')),
       ),
+    ),
 
-      
-      const MovableChatBotButton(),
-    ],
-  ),
-);
+    const MovableChatBotButton(),
+  ],
+ ),
 
+    );
   }
 }
 
+class _BoldRefreshIcon extends StatefulWidget {
+  const _BoldRefreshIcon({Key? key}) : super(key: key);
+
+  @override
+  State<_BoldRefreshIcon> createState() => _BoldRefreshIconState();
+}
+
+class _BoldRefreshIconState extends State<_BoldRefreshIcon>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller =
+        AnimationController(vsync: this, duration: const Duration(seconds: 1))
+          ..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RotationTransition(
+      turns: _controller,
+      child: Container(
+        width: 65,
+        height: 65,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: const LinearGradient(
+            colors: [Color(0xFF1565C0), Color(0xFF42A5F5)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(2, 3),
+            ),
+          ],
+        ),
+        child: const Icon(
+          Icons.refresh_rounded,
+          color: Colors.white,
+          size: 34,
+        ),
+      ),
+    );
+  }
+}
+
+
 extension on AsyncValue<List> {
+  // ignore: unused_element
+  get future => null;
+}
+
+
+extension on AsyncValue<List> {
+   // ignore: unused_element
    get future => null;
 }
 

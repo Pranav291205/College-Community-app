@@ -59,7 +59,7 @@ class _NavBarPageState extends State<NavBarPage>
         children: _pages,
       ),
 
-      // 🔹 Animated Bottom Navigation Bar
+     
       bottomNavigationBar: Stack(
         alignment: Alignment.bottomCenter,
         children: [
@@ -70,58 +70,61 @@ class _NavBarPageState extends State<NavBarPage>
               ),
             ),
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 400),
-              curve: Curves.easeInOut,
-              color: _navColors[_currentIndex], // 🔸 Dynamic background color
-              child: BottomNavigationBar(
-                currentIndex: _currentIndex,
-                onTap: (int index) {
-                  setState(() {
-                    _currentIndex = index;
-                  });
-                  _pageController.animateToPage(
-                    index,
-                    duration: const Duration(milliseconds: 400),
-                    curve: Curves.easeOutCubic,
-                  );
-                },
-                elevation: 0,
-                backgroundColor: Colors.transparent, // transparent to show container color
-                selectedItemColor: const Color.fromARGB(255, 40, 86, 95),
-                unselectedItemColor: const Color.fromARGB(255, 137, 141, 144),
-                type: BottomNavigationBarType.fixed,
-                showSelectedLabels: true,
-                showUnselectedLabels: true,
-                items: List.generate(5, (index) {
-                  const icons = [
-                    Icons.home_outlined,
-                    Icons.chat_outlined,
-                    Icons.add,
-                    Icons.person_outlined,
-                    Icons.more_horiz_outlined,
-                  ];
-                  const activeIcons = [
-                    Icons.home,
-                    Icons.chat,
-                    Icons.add,
-                    Icons.person,
-                    Icons.more_horiz,
-                  ];
-                  const labels = ['Home', 'Chat', 'Post', 'Profile', 'Others'];
+  duration: const Duration(milliseconds: 400),
+  curve: Curves.easeInOut,
+  color: _navColors[_currentIndex],
+  padding: const EdgeInsets.only(top: 10), 
+  height: 115, 
+  child: BottomNavigationBar(
+    currentIndex: _currentIndex,
+    onTap: (int index) {
+      setState(() {
+        _currentIndex = index;
+      });
+      _pageController.animateToPage(
+        index,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeOutCubic,
+      );
+    },
+    elevation: 0,
+    backgroundColor: Colors.transparent,
+    selectedItemColor: const Color.fromARGB(255, 40, 86, 95),
+    unselectedItemColor: const Color.fromARGB(255, 137, 141, 144),
+    type: BottomNavigationBarType.fixed,
+    showSelectedLabels: true,
+    showUnselectedLabels: true,
+    items: List.generate(5, (index) {
+      const icons = [
+        Icons.home_outlined,
+        Icons.chat_outlined,
+        Icons.add,
+        Icons.person_outlined,
+        Icons.more_horiz_outlined,
+      ];
+      const activeIcons = [
+        Icons.home,
+        Icons.chat,
+        Icons.add,
+        Icons.person,
+        Icons.more_horiz,
+      ];
+      const labels = ['Home', 'Chat', 'Post', 'Profile', 'Others'];
 
-                  final isSelected = _currentIndex == index;
+      final isSelected = _currentIndex == index;
 
-                  return BottomNavigationBarItem(
-                    icon: _BouncyIcon(
-                      icon: icons[index],
-                      activeIcon: activeIcons[index],
-                      isActive: isSelected,
-                    ),
-                    label: labels[index],
-                  );
-                }),
-              ),
-            ),
+      return BottomNavigationBarItem(
+        icon: _BouncyIcon(
+          icon: icons[index],
+          activeIcon: activeIcons[index],
+          isActive: isSelected,
+        ),
+        label: labels[index],
+      );
+    }),
+  ),
+),
+
           ),
           Positioned(
             bottom: 6,
@@ -130,7 +133,7 @@ class _NavBarPageState extends State<NavBarPage>
               curve: Curves.easeOutBack,
               alignment: _indicatorAlignment(_currentIndex),
               child: Container(
-                height: 4,
+                height: 5,
                 width: 24,
                 decoration: BoxDecoration(
                   color: const Color.fromARGB(255, 91, 118, 176),
@@ -162,7 +165,7 @@ class _NavBarPageState extends State<NavBarPage>
   }
 }
 
-// 🔹 Icon bounce effect
+
 class _BouncyIcon extends StatelessWidget {
   final IconData icon;
   final IconData activeIcon;
