@@ -1,3 +1,4 @@
+import 'package:community_app/screens/chatbot.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
@@ -10,20 +11,85 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final postsAsync = ref.watch(postsProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('College Community', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.refresh(postsProvider),
+   return Scaffold(
+  appBar: AppBar(
+  elevation: 6,
+  toolbarHeight: 75,
+  centerTitle: true,
+  title: ShaderMask(
+    shaderCallback: (bounds) => const LinearGradient(
+      colors: [Colors.white, Color(0xFFE3F2FD)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    ).createShader(bounds),
+    child: const Text(
+      'CollabSpace',
+      style: TextStyle(
+        fontWeight: FontWeight.w800,
+        fontSize: 26,
+        letterSpacing: 1.5,
+        color: Colors.white,
+        fontFamily: 'Poppins', // or Montserrat for a modern look
+        shadows: [
+          Shadow(
+            color: Colors.black26,
+            offset: Offset(1, 2),
+            blurRadius: 4,
           ),
         ],
       ),
-      body: postsAsync.when(
+    ),
+  ),
+  flexibleSpace: Container(
+    decoration: const BoxDecoration(
+      gradient: LinearGradient(
+        colors: [
+          Color(0xFF1565C0), // Rich blue
+          Color(0xFF42A5F5), // Sky blue
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+    ),
+  ),
+  actions: [
+    Padding(
+      padding: const EdgeInsets.only(right: 12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(40),
+        onTap: () => ref.refresh(postsProvider),
+        child: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white.withOpacity(0.15),
+            border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 4,
+                offset: const Offset(2, 2),
+              ),
+            ],
+          ),
+          child: const Icon(
+            Icons.refresh_rounded,
+            color: Colors.white,
+            size: 22,
+          ),
+        ),
+      ),
+    ),
+  ],
+),
+
+
+
+  body: Stack(
+    children: [
+     
+      postsAsync.when(
         data: (posts) => posts.isEmpty
             ? Center(
                 child: Column(
@@ -45,7 +111,13 @@ class HomeScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, __) => Center(child: Text('Error: $err')),
       ),
-    );
+
+      
+      const MovableChatBotButton(),
+    ],
+  ),
+);
+
   }
 }
 
@@ -169,5 +241,97 @@ class _PostCardState extends State<PostCard> {
     } catch (_) {
       return '';
     }
+  }
+}
+
+class MovableChatBotButton extends StatefulWidget {
+  const MovableChatBotButton({Key? key}) : super(key: key);
+
+  @override
+  State<MovableChatBotButton> createState() => _MovableChatBotButtonState();
+}
+
+class _MovableChatBotButtonState extends State<MovableChatBotButton>
+    with SingleTickerProviderStateMixin {
+  double x = 20;
+  double y = 500;
+  late AnimationController _controller;
+  // ignore: unused_field
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+
+    _fadeAnimation = Tween<double>(begin: 0.3, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Get screen size to limit drag area
+    final screenSize = MediaQuery.of(context).size;
+    const double buttonSize = 60;
+
+    return Positioned(
+      left: x,
+      top: y,
+      child: GestureDetector(
+        onPanUpdate: (details) {
+          setState(() {
+            
+            x = (x + details.delta.dx).clamp(0.0, screenSize.width - buttonSize);
+            y = (y + details.delta.dy).clamp(0.0, screenSize.height - buttonSize - 80);
+          });
+        },
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ChatBotPage()),
+          );
+        },
+        child: Stack(
+          alignment: Alignment.center,
+          clipBehavior: Clip.none,
+          children: [
+    
+            Opacity(
+              opacity: 0.9,
+              child: Container(
+                width: buttonSize,
+                height: buttonSize,
+                decoration: BoxDecoration(
+                  color: Colors.blueAccent.withOpacity(0.9),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 6,
+                      offset: const Offset(2, 3),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.smart_toy_outlined,
+                  color: Colors.white,
+                  size: 30,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
