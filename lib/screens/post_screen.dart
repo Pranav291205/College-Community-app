@@ -90,12 +90,12 @@ class PostScreen extends ConsumerWidget {
 
   body: Stack(
     children: [
-      // 🔹 Animated moving gradient background
+    
       const Positioned.fill(
         child: AnimatedGradientBackground(),
       ),
 
-      // 🔹 Your existing UI stays untouched
+    
       SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(

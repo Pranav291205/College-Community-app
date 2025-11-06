@@ -31,10 +31,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Future<void> _loadUserProfile() async {
     try {
       final token = PostService.authToken;
-      print('🔐 Loading profile with token: ${token?.substring(0, 20) ?? "null"}...');
 
       if (token == null || token.isEmpty) {
-        print('❌ No token available');
         setState(() => _isLoading = false);
         return;
       }
@@ -47,8 +45,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         },
       );
 
-      print('📊 Profile Status: ${response.statusCode}');
-
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         Map<String, dynamic>? userData = data['data'] ?? data['user'] ?? data;
@@ -57,13 +53,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           _userData = userData;
           _isLoading = false;
         });
-        print('✅ Profile loaded successfully');
       } else {
-        print('❌ Failed to load profile: ${response.statusCode}');
         setState(() => _isLoading = false);
       }
     } catch (e) {
-      print('❌ Exception loading profile: $e');
       setState(() => _isLoading = false);
     }
   }
@@ -75,7 +68,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     if (token == null || token.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Profile')),
+        appBar: AppBar(
+          title: const Text(
+            'Profile',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -108,7 +106,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     if (_userData == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Profile')),
+        appBar: AppBar(
+          title: const Text(
+            'Profile',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -135,356 +138,387 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile'),
-        backgroundColor: Colors.blue,
-        actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
-            onSelected: (String value) {
-              if (value == 'logout') {
-                _showLogoutDialog(context);
-              }
-            },
-            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-              const PopupMenuItem<String>(
-                value: 'logout',
-                child: Row(
-                  children: [
-                    Icon(Icons.logout, color: Colors.red),
-                    SizedBox(width: 12),
-                    Text('Logout', style: TextStyle(color: Colors.red)),
-                  ],
-                ),
-              ),
+  toolbarHeight: 70,
+  title: const Text(
+    'Profile',
+    style: TextStyle(
+      fontWeight: FontWeight.bold,
+      fontSize: 30,
+      color: Colors.white, // text in white for blue gradient
+    ),
+  ),
+  backgroundColor: Colors.transparent,
+  elevation: 0,
+  flexibleSpace: Container(
+    decoration: const BoxDecoration(
+      gradient: LinearGradient(
+        colors: [Color(0xFF1565C0), Color(0xFF42A5F5)], // blue gradient
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+    ),
+  ),
+  actions: [
+    PopupMenuButton<String>(
+      icon: const Icon(Icons.more_vert, color: Colors.white),
+      onSelected: (String value) {
+        if (value == 'logout') {
+          _showLogoutDialog(context);
+        }
+      },
+      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+        const PopupMenuItem<String>(
+          value: 'logout',
+          child: Row(
+            children: [
+              Icon(Icons.logout, color: Colors.black),
+              SizedBox(width: 12),
+              Text('Logout', style: TextStyle(color: Colors.black)),
             ],
           ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          await _loadUserProfile();
-          ref.refresh(userPostsProvider);
-        },
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            children: [
-              Container(
-                color: Colors.blue,
-                padding: const EdgeInsets.all(16),
-                child: Card(
-                  elevation: 4,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      gradient: LinearGradient(
-                        colors: [Colors.blue.shade50, Colors.white],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                    ),
+        ),
+      ],
+    ),
+  ],
+),
+
+      body: Container(
+        color: const Color.fromARGB(255, 208, 229, 245),
+        child: RefreshIndicator(
+          onRefresh: () async {
+            await _loadUserProfile();
+            ref.refresh(userPostsProvider);
+          },
+          child: ScrollConfiguration(
+            behavior: const ScrollBehavior().copyWith(overscroll: false),
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Column(
+                children: [
+                  Container(
                     padding: const EdgeInsets.all(16),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        GestureDetector(
-                          onTap: _showImagePickerOptions,
-                          child: Stack(
-                            children: [
-                              CircleAvatar(
-                                radius: 50,
-                                backgroundColor: Colors.blue.shade100,
-                                backgroundImage: _profileImage != null ? FileImage(_profileImage!) : null,
-                                child: _profileImage == null
-                                    ? Text(
-                                        name[0].toUpperCase(),
-                                        style: const TextStyle(
-                                          fontSize: 40,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.blue,
-                                        ),
-                                      )
-                                    : null,
-                              ),
-                              Positioned(
-                                bottom: 0,
-                                right: 0,
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.blue,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: Colors.white, width: 2),
-                                  ),
-                                  padding: const EdgeInsets.all(8),
-                                  child: const Icon(Icons.camera_alt, size: 20, color: Colors.white),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                name,
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                email,
-                                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
+                    child: Card(
+                      color: const Color.fromARGB(255, 164, 212, 225).withOpacity(0.9),
+                      elevation: 6,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            GestureDetector(
+                              onTap: _showImagePickerOptions,
+                              child: Stack(
                                 children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: Colors.blue.shade100,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      branch,
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.blue.shade800,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
+                                  CircleAvatar(
+                                    radius: 50,
+                                    backgroundColor: Colors.blue.shade100,
+                                    backgroundImage: _profileImage != null
+                                        ? FileImage(_profileImage!)
+                                        : null,
+                                    child: _profileImage == null
+                                        ? Text(
+                                            name[0].toUpperCase(),
+                                            style: const TextStyle(
+                                              fontSize: 40,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.blue,
+                                            ),
+                                          )
+                                        : null,
                                   ),
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: Colors.orange.shade100,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      '$year Year',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.orange.shade800,
-                                        fontWeight: FontWeight.bold,
+                                  Positioned(
+                                    bottom: 0,
+                                    right: 0,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.blue[800],
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                            color: Colors.white, width: 2),
                                       ),
+                                      padding: const EdgeInsets.all(8),
+                                      child: const Icon(Icons.camera_alt,
+                                          size: 20, color: Colors.white),
                                     ),
                                   ),
                                 ],
                               ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
-              if (interests.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Interests',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: interests
-                            .map(
-                              (interest) => Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: Colors.blue.shade100,
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: Colors.blue.shade300),
-                                ),
-                                child: Text(
-                                  interest,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.blue.shade800,
-                                    fontWeight: FontWeight.w600,
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    name,
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                ),
-                              ),
-                            )
-                            .toList(),
-                      ),
-                    ],
-                  ),
-                ),
-
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Divider(thickness: 2),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'My Posts',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        userPostsAsync.when(
-                          data: (posts) => Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: Colors.blue.shade100,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              '${posts.length}',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue.shade800,
-                              ),
-                            ),
-                          ),
-                          loading: () => const SizedBox.shrink(),
-                          error: (_, __) => const SizedBox.shrink(),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    userPostsAsync.when(
-                      data: (posts) {
-                        if (posts.isEmpty) {
-                          return Center(
-                            child: Column(
-                              children: [
-                                Icon(Icons.post_add, size: 64, color: Colors.grey[400]),
-                                const SizedBox(height: 12),
-                                Text(
-                                  'No posts yet',
-                                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                                ),
-                              ],
-                            ),
-                          );
-                        }
-
-                        return ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: posts.length,
-                          itemBuilder: (context, index) {
-                            final post = posts[index];
-                            final title = post['title'] ?? 'Untitled';
-                            final description = post['description'] ?? '';
-                            final category = post['category'] ?? 'General';
-                            final createdAt = post['createdAt'] ?? '';
-
-                            return Card(
-                              margin: const EdgeInsets.only(bottom: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(10),
-                                  gradient: LinearGradient(
-                                    colors: [Colors.blue.shade50, Colors.white],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    email,
+                                    style: TextStyle(
+                                        fontSize: 13, color: Colors.grey[700]),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                ),
-                                padding: const EdgeInsets.all(12),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            title,
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.black87,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 6),
+                                        decoration: BoxDecoration(
+                                          color: Colors.blue.shade100,
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                        child: Text(
+                                          branch,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.blue.shade800,
+                                            fontWeight: FontWeight.bold,
                                           ),
                                         ),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                          decoration: BoxDecoration(
-                                            color: Colors.blue.shade100,
-                                            borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 6),
+                                        decoration: BoxDecoration(
+                                          color: Colors.orange.shade100,
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                        child: Text(
+                                          '$year Year',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.orange.shade800,
+                                            fontWeight: FontWeight.bold,
                                           ),
-                                          child: Text(
-                                            category,
-                                            style: TextStyle(
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.blue.shade800,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (interests.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Interests',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: interests
+                                .map(
+                                  (interest) => Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 14, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.8),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                          color: Colors.blue.shade200),
+                                    ),
+                                    child: Text(
+                                      interest,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.blue.shade800,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                        ],
+                      ),
+                    ),
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Divider(thickness: 2),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'My Posts',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            userPostsAsync.when(
+                              data: (posts) => Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.8),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  '${posts.length}',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blue.shade800,
+                                  ),
+                                ),
+                              ),
+                              loading: () => const SizedBox.shrink(),
+                              error: (_, __) => const SizedBox.shrink(),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        userPostsAsync.when(
+                          data: (posts) {
+                            if (posts.isEmpty) {
+                              return Center(
+                                child: Column(
+                                  children: [
+                                    Icon(Icons.post_add,
+                                        size: 64, color: Colors.grey[400]),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      'No posts yet',
+                                      style: TextStyle(
+                                          fontSize: 14, color: Colors.grey[600]),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+
+                            return ListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: posts.length,
+                              itemBuilder: (context, index) {
+                                final post = posts[index];
+                                final title = post['title'] ?? 'Untitled';
+                                final description = post['description'] ?? '';
+                                final category = post['category'] ?? 'General';
+                                final createdAt = post['createdAt'] ?? '';
+
+                                return Card(
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  color: Colors.white.withOpacity(0.9),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12)),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(12),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                title,
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.black87,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
                                             ),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(
+                                                  horizontal: 10, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: Colors.blue.shade100
+                                                    .withOpacity(0.8),
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                              child: Text(
+                                                category,
+                                                style: TextStyle(
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.blue.shade800,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          description,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey[700],
+                                            height: 1.3,
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          _formatDate(createdAt),
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            color: Colors.grey[500],
                                           ),
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      description,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey[700],
-                                        height: 1.3,
-                                      ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      _formatDate(createdAt),
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        color: Colors.grey[500],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                                  ),
+                                );
+                              },
                             );
                           },
-                        );
-                      },
-                      loading: () => const Center(child: CircularProgressIndicator()),
-                      error: (error, _) => Center(
-                        child: Text('Error loading posts: $error'),
-                      ),
+                          loading: () =>
+                              const Center(child: CircularProgressIndicator()),
+                          error: (error, _) => Center(
+                            child: Text('Error loading posts: $error'),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
               ),
-              const SizedBox(height: 24),
-            ],
+            ),
           ),
         ),
       ),
