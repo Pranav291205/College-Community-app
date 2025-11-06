@@ -1,6 +1,9 @@
+import 'dart:ui';
+
 import 'package:community_app/navbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lottie/lottie.dart';
 import '../services/auth_service.dart';
 import '../services/post_service.dart';
 
@@ -191,287 +194,266 @@ class _SignupPageState extends ConsumerState<SignupPage> {
       },
     );
   }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text('Sign Up'),
-        backgroundColor: Colors.blue,
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                const Icon(
-                  Icons.person_add,
-                  size: 80,
-                  color: Colors.blue,
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Create Account',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue,
-                  ),
-                ),
-                const SizedBox(height: 30),
-
-                // Name
-                TextFormField(
-                  controller: _nameController,
-                  decoration: InputDecoration(
-                    labelText: 'Name',
-                    hintText: 'Enter your full name',
-                    prefixIcon: const Icon(Icons.person),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your name';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-
-                // Email
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    hintText: 'yourname@akgec.ac.in',
-                    prefixIcon: const Icon(Icons.email),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
-                    }
-                    if (!value.endsWith('@akgec.ac.in')) {
-                      return 'Only AKGEC email addresses are allowed';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-
-                // Password
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: !_isPasswordVisible,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    hintText: 'Enter your password',
-                    prefixIcon: const Icon(Icons.lock),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _isPasswordVisible
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _isPasswordVisible = !_isPasswordVisible;
-                        });
-                      },
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
-                    }
-                    if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-
-                // Branch Dropdown
-                DropdownButtonFormField<String>(
-                  value: _selectedBranch,
-                  decoration: InputDecoration(
-                    labelText: 'Branch',
-                    prefixIcon: const Icon(Icons.school),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  items: branches.map((String branch) {
-                    return DropdownMenuItem(
-                      value: branch,
-                      child: Text(branch),
-                    );
-                  }).toList(),
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      _selectedBranch = newValue;
-                    });
-                  },
-                  validator: (value) {
-                    if (value == null) {
-                      return 'Please select your branch';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-
-                // Year Dropdown
-                DropdownButtonFormField<String>(
-                  value: _selectedYear,
-                  decoration: InputDecoration(
-                    labelText: 'Year',
-                    prefixIcon: const Icon(Icons.calendar_today),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  items: years.map((String year) {
-                    return DropdownMenuItem(
-                      value: year,
-                      child: Text(year),
-                    );
-                  }).toList(),
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      _selectedYear = newValue;
-                    });
-                  },
-                  validator: (value) {
-                    if (value == null) {
-                      return 'Please select your year';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-
-                // Interests
-                InkWell(
-                  onTap: _showInterestsDialog,
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.interests, color: Colors.grey),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            _selectedInterests.isEmpty
-                                ? 'Select Interests (Optional)'
-                                : '${_selectedInterests.length} interests selected',
-                            style: TextStyle(
-                              color: _selectedInterests.isEmpty
-                                  ? Colors.grey
-                                  : Colors.black,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ),
-                        const Icon(Icons.arrow_forward_ios, size: 16),
-                      ],
-                    ),
-                  ),
-                ),
-
-                if (_selectedInterests.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _selectedInterests.map((interest) {
-                      return Chip(
-                        label: Text(
-                          interest,
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                        backgroundColor: Colors.blue.shade50,
-                        deleteIcon: const Icon(Icons.close, size: 16),
-                        onDeleted: () {
-                          setState(() {
-                            _selectedInterests.remove(interest);
-                          });
-                        },
-                      );
-                    }).toList(),
-                  ),
-                ],
-                const SizedBox(height: 30),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _signup,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : const Text(
-                            'Sign Up',
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: Colors.white,
-                            ),
-                          ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text("Already have an account? "),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      child: const Text(
-                        'Login',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    body: Stack(
+      children: [
+        // ✅ Animated Dark Blue Gradient Background
+        TweenAnimationBuilder(
+          tween: Tween<double>(begin: 0, end: 1),
+          duration: const Duration(seconds: 5),
+          builder: (context, value, child) {
+            return Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: const [
+                    Color(0xff0A192F), // Dark Navy
+                    Color(0xff172A45), // Deep Blue
+                    Color(0xff1F4068), // Classic Dark Blue
+                    Color(0xff0A192F), // Loop Back
                   ],
+                  stops: [0.0, value * 0.4, value * 0.8, 1.0],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-              ],
+              ),
+            );
+          },
+        ),
+
+        Center(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(22.0),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.25),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.white.withOpacity(0.2)),
+                    ),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                         SizedBox(
+                          height: 130,
+                           width: 130,
+                            child: Lottie.network(
+                                 'https://assets5.lottiefiles.com/packages/lf20_tno6cg2w.json', // Tech animation
+                                 fit: BoxFit.contain,
+                               repeat: true,
+                              ),
+                               ),
+
+
+                          const SizedBox(height: 10),
+                          const Text(
+                            "Create Your Account",
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const Text(
+                            "Join the AKGEC community 🚀",
+                            style: TextStyle(color: Colors.white70),
+                          ),
+
+                          const SizedBox(height: 25),
+
+                          _buildTextField(
+                            controller: _nameController,
+                            hint: "Full Name",
+                            icon: Icons.person,
+                          ),
+
+                          _buildTextField(
+                            controller: _emailController,
+                            hint: "yourname@akgec.ac.in",
+                            icon: Icons.email,
+                            inputType: TextInputType.emailAddress,
+                          ),
+
+                          _buildTextField(
+                            controller: _passwordController,
+                            hint: "Password",
+                            icon: Icons.lock,
+                            isPassword: true,
+                          ),
+
+                          const SizedBox(height: 18),
+
+                          _buildDropdown("Select Branch", Icons.school, branches, _selectedBranch, (v) {
+                            setState(() => _selectedBranch = v);
+                          }),
+
+                          const SizedBox(height: 18),
+
+                          _buildDropdown("Select Year", Icons.calendar_today, years, _selectedYear, (v) {
+                            setState(() => _selectedYear = v);
+                          }),
+
+                          const SizedBox(height: 18),
+
+                          GestureDetector(
+                            onTap: _showInterestsDialog,
+                            child: _buildGlassTile(
+                              icon: Icons.interests,
+                              text: _selectedInterests.isEmpty
+                                  ? "Choose Interests (Optional)"
+                                  : "${_selectedInterests.length} Selected",
+                            ),
+                          ),
+
+                          if (_selectedInterests.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 12),
+                              child: Wrap(
+                                spacing: 8,
+                                children: _selectedInterests
+                                    .map((e) => Chip(
+                                          backgroundColor: Colors.blueGrey.shade900,
+                                          label: Text(e, style: const TextStyle(color: Colors.white)),
+                                          deleteIcon: const Icon(Icons.close, size: 16, color: Colors.white70),
+                                          onDeleted: () {
+                                            setState(() => _selectedInterests.remove(e));
+                                          },
+                                        ))
+                                    .toList(),
+                              ),
+                            ),
+
+                          const SizedBox(height: 28),
+
+                          SizedBox(
+                            width: double.infinity,
+                            height: 50,
+                            child: ElevatedButton(
+                              onPressed: _signup,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xff1F4068),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                elevation: 6,
+                              ),
+                              child: const Text(
+                                "Sign Up",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Text("Already have an account?", style: TextStyle(color: Colors.white70)),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text(
+                                  "Login",
+                                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
         ),
+      ],
+    ),
+  );
+}
+
+Widget _buildTextField({
+  required TextEditingController controller,
+  required String hint,
+  required IconData icon,
+  bool isPassword = false,
+  TextInputType inputType = TextInputType.text,
+}) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 18),
+    child: TextFormField(
+      controller: controller,
+      obscureText: isPassword,
+      keyboardType: inputType,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: const TextStyle(color: Colors.white70),
+        prefixIcon: Icon(icon, color: Colors.white70),
+        filled: true,
+        fillColor: Colors.white.withOpacity(0.2),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
       ),
-    );
-  }
+    ),
+  );
+}
+
+Widget _buildDropdown(String hint, IconData icon, List<String> items, String? value, Function(String?) onChanged) {
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12),
+    decoration: BoxDecoration(
+      color: Colors.white.withOpacity(0.2),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: DropdownButtonFormField<String>(
+      value: value,
+      dropdownColor: Colors.blue.shade200,
+      hint: Text(hint, style: const TextStyle(color: Colors.white70)),
+      icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white),
+      decoration: InputDecoration(
+        prefixIcon: Icon(icon, color: Colors.white70),
+        border: InputBorder.none,
+      ),
+      items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+      onChanged: onChanged,
+    ),
+  );
+}
+
+Widget _buildGlassTile({required IconData icon, required String text}) {
+  return Container(
+    padding: const EdgeInsets.all(15),
+    decoration: BoxDecoration(
+      color: Colors.white.withOpacity(0.2),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Row(
+      children: [
+        Icon(icon, color: Colors.white70),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(text, style: const TextStyle(color: Colors.white70, fontSize: 16)),
+        ),
+        const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.white70),
+      ],
+    ),
+  );
+}
+
 }
