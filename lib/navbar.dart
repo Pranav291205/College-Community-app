@@ -73,7 +73,7 @@ class _NavBarPageState extends State<NavBarPage>
               curve: Curves.easeInOut,
               color: _navColors[_currentIndex],
               padding: const EdgeInsets.only(top: 6), 
-              height: 70,  
+              height: 115,  
               child: BottomNavigationBar(
                 currentIndex: _currentIndex,
                 onTap: (int index) {
