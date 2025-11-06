@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -45,13 +46,57 @@ class PostScreen extends ConsumerWidget {
 
     print('✅ Logged in - showing post form');
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Create Post'),
-        backgroundColor: Colors.blue,
-        elevation: 2,
+   return Scaffold(
+ appBar: PreferredSize(
+  preferredSize: const Size.fromHeight(70),
+  child: ClipRRect(
+    borderRadius: const BorderRadius.only(
+      bottomLeft: Radius.circular(0),
+      bottomRight: Radius.circular(0),
+    ),
+    child: BackdropFilter(
+      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10), // glass effect
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color.fromARGB(255, 7, 63, 126),
+              Color(0xFF6FB1FC),
+            ],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Center(
+          child: AnimatedShimmerText(
+            text: 'Create Post',
+            fontSize: 22,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1.2,
+          ),
+        ),
       ),
-      body: SingleChildScrollView(
+    ),
+  ),
+),
+
+
+  body: Stack(
+    children: [
+      // 🔹 Animated moving gradient background
+      const Positioned.fill(
+        child: AnimatedGradientBackground(),
+      ),
+
+      // 🔹 Your existing UI stays untouched
+      SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -209,13 +254,8 @@ class PostScreen extends ConsumerWidget {
                         if (!context.mounted) return;
 
                         if (result['success']) {
-                          print('✅ Post created successfully');
- 
                           ref.refresh(userPostsProvider);
-                          print('🔄 User posts refreshed');
-                  
                           ref.refresh(postsProvider);
-                          print('🔄 Posts feed refreshed');
 
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
@@ -258,6 +298,133 @@ class PostScreen extends ConsumerWidget {
           ],
         ),
       ),
+    ],
+  ),
+);
+  }
+}
+class AnimatedGradientBackground extends StatefulWidget {
+  const AnimatedGradientBackground({Key? key}) : super(key: key);
+
+  @override
+  State<AnimatedGradientBackground> createState() => _AnimatedGradientBackgroundState();
+}
+
+class _AnimatedGradientBackgroundState extends State<AnimatedGradientBackground>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<Alignment> _alignmentAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 10),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _alignmentAnimation = Tween<Alignment>(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    ).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: _alignmentAnimation.value,
+              end: Alignment.center,
+              colors: [
+                Colors.blue.shade300,
+                Colors.blue.shade500,
+                Colors.blue.shade700,
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+class AnimatedShimmerText extends StatefulWidget {
+  final String text;
+  final double fontSize;
+  final FontWeight fontWeight;
+  final double letterSpacing;
+
+  const AnimatedShimmerText({
+    Key? key,
+    required this.text,
+    this.fontSize = 20,
+    this.fontWeight = FontWeight.bold,
+    this.letterSpacing = 1.0,
+  }) : super(key: key);
+
+  @override
+  State<AnimatedShimmerText> createState() => _AnimatedShimmerTextState();
+}
+
+class _AnimatedShimmerTextState extends State<AnimatedShimmerText>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return ShaderMask(
+          shaderCallback: (rect) {
+            return LinearGradient(
+              begin: Alignment(-1.0 + _controller.value * 2, 0),
+              end: Alignment(1.0 + _controller.value * 2, 0),
+              colors: [
+                Colors.white,
+                Colors.blue.shade100,
+                Colors.white,
+              ],
+              stops: const [0.0, 0.5, 1.0],
+            ).createShader(rect);
+          },
+          child: Text(
+            widget.text,
+            style: TextStyle(
+              fontSize: widget.fontSize,
+              fontWeight: widget.fontWeight,
+              color: Colors.white,
+              letterSpacing: widget.letterSpacing,
+            ),
+          ),
+        );
+      },
     );
   }
 }
