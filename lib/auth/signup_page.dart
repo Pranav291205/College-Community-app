@@ -246,7 +246,7 @@ Widget build(BuildContext context) {
                           height: 130,
                            width: 130,
                             child: Lottie.network(
-                                 'https://assets5.lottiefiles.com/packages/lf20_tno6cg2w.json', // Tech animation
+                                 'https://assets5.lottiefiles.com/packages/lf20_tno6cg2w.json', 
                                  fit: BoxFit.contain,
                                repeat: true,
                               ),
