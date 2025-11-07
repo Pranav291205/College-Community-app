@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/chat_model.dart';
 import '../providers/chat_provider.dart';
+import '../services/chat_service.dart';
 import 'chat_detail_page.dart';
+import 'group_members_screen.dart';
 
 class ChatPage extends ConsumerStatefulWidget {
   const ChatPage({Key? key}) : super(key: key);
@@ -20,10 +22,10 @@ class _ChatPageState extends ConsumerState<ChatPage>
   @override
   void initState() {
     super.initState();
-    bgController =
-        bgController = AnimationController(
-    vsync: this, duration: const Duration(seconds: 3)) // now faster
-  ..repeat(reverse: true);
+    bgController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat(reverse: true);
 
     bgAnimation = Tween<double>(begin: 0.2, end: 0.9).animate(bgController);
   }
@@ -32,6 +34,52 @@ class _ChatPageState extends ConsumerState<ChatPage>
   void dispose() {
     bgController.dispose();
     super.dispose();
+  }
+
+  Future<void> _leaveGroup(String groupId, String groupName) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Leave Group?'),
+        content: Text('Leave "$groupName"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text(
+              'Leave',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    final result = await ChatService.leaveGroup(groupId);
+    if (mounted) {
+      if (result['success']) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ Left group'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        ref.refresh(chatGroupsProvider);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ ${result['message']}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -88,7 +136,6 @@ class _ChatPageState extends ConsumerState<ChatPage>
       ),
       body: Stack(
         children: [
-          // ✅ Updated Dark Blue Bubble Background
           Stack(
             children: [
               Container(
@@ -122,9 +169,36 @@ class _ChatPageState extends ConsumerState<ChatPage>
             child: chatGroupsAsync.when(
               data: (groups) {
                 if (groups.isEmpty) {
-                  return const Center(
-                    child: Text("No chats yet",
-                        style: TextStyle(color: Colors.white, fontSize: 20)),
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.chat_outlined,
+                            size: 64, color: Colors.white30),
+                        const SizedBox(height: 16),
+                        const Text(
+                          "No chats yet",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const CreateGroupChatPage(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.add),
+                          label: const Text('Create Group'),
+                        ),
+                      ],
+                    ),
                   );
                 }
 
@@ -140,6 +214,8 @@ class _ChatPageState extends ConsumerState<ChatPage>
                         ? group.messages.last.senderName
                         : '';
                     final timeAgo = _formatTime(group.updatedAt);
+                    final memberCount =
+                        group.users.length;
 
                     final anim = CurvedAnimation(
                       parent: const AlwaysStoppedAnimation(1),
@@ -157,7 +233,8 @@ class _ChatPageState extends ConsumerState<ChatPage>
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.blue.shade200.withOpacity(0.4),
+                                color: Colors.blue.shade200
+                                    .withOpacity(0.4),
                                 blurRadius: 12,
                                 spreadRadius: 1,
                               )
@@ -165,7 +242,8 @@ class _ChatPageState extends ConsumerState<ChatPage>
                           ),
                           child: Card(
                             elevation: 6,
-                            color: Colors.blue.shade800.withOpacity(0.85),
+                            color: Colors.blue.shade800
+                                .withOpacity(0.85),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
@@ -179,12 +257,54 @@ class _ChatPageState extends ConsumerState<ChatPage>
                                   ),
                                 );
                               },
+                              onLongPress: () {
+                                showModalBottomSheet(
+                                  context: context,
+                                  builder: (context) => Container(
+                                    color: Colors.grey[900],
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        ListTile(
+                                          leading: Icon(Icons.people,
+                                              color: Colors.blue),
+                                          title: const Text('View Members'),
+                                          onTap: () {
+                                            Navigator.pop(context);
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) =>
+                                                    GroupMembersScreen(
+                                                  groupId: group.id,
+                                                  groupName: group.chatName,
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                        ListTile(
+                                          leading: Icon(Icons.exit_to_app,
+                                              color: Colors.red),
+                                          title: const Text('Leave Group'),
+                                          onTap: () {
+                                            Navigator.pop(context);
+                                            _leaveGroup(group.id,
+                                                group.chatName);
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
                               leading: CircleAvatar(
                                 radius: 28,
                                 backgroundColor: Colors.lightBlueAccent,
                                 child: Text(
                                   group.chatName.isNotEmpty
-                                      ? group.chatName[0].toUpperCase()
+                                      ? group.chatName[0]
+                                          .toUpperCase()
                                       : 'G',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
@@ -203,20 +323,38 @@ class _ChatPageState extends ConsumerState<ChatPage>
                               ),
                               subtitle: Padding(
                                 padding: const EdgeInsets.only(top: 4),
-                                child: Text(
-                                  lastSender.isNotEmpty
-                                      ? "$lastSender: $lastMessage"
-                                      : lastMessage,
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 13,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      lastSender.isNotEmpty
+                                          ? "$lastSender: $lastMessage"
+                                          : lastMessage,
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 13,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    // ✅ Show member count
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 4),
+                                      child: Text(
+                                        '👥 $memberCount members',
+                                        style: const TextStyle(
+                                          color: Colors.white60,
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                               trailing: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.center,
                                 children: [
                                   Text(
                                     timeAgo,
@@ -255,10 +393,26 @@ class _ChatPageState extends ConsumerState<ChatPage>
               loading: () => const Center(
                 child: CircularProgressIndicator(color: Colors.white),
               ),
-              error: (err, _) => const Center(
-                child: Text(
-                  "Failed to load chats",
-                  style: TextStyle(color: Colors.white),
+              error: (err, _) => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error_outline,
+                        size: 64, color: Colors.red[300]),
+                    const SizedBox(height: 16),
+                    const Text(
+                      "Failed to load chats",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () => ref.refresh(chatGroupsProvider),
+                      child: const Text('Retry'),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -284,7 +438,6 @@ String _formatTime(String? dateString) {
   }
 }
 
-// ✅ Bubble Animation Painter
 class BubblePainter extends CustomPainter {
   final double animationValue;
   BubblePainter(this.animationValue);
@@ -306,8 +459,8 @@ class BubblePainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     for (var pos in bubblePositions) {
-      double fluctuation =
-          (animationValue * 20) * (bubblePositions.indexOf(pos) % 2 == 0 ? 1 : -1);
+      double fluctuation = (animationValue * 20) *
+          (bubblePositions.indexOf(pos) % 2 == 0 ? 1 : -1);
 
       canvas.drawCircle(
         Offset(pos.dx * size.width, pos.dy * size.height + fluctuation),

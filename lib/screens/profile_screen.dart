@@ -1,13 +1,17 @@
+import 'package:community_app/providers/liked_posts_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../services/post_service.dart';
 import '../providers/auth_notifier.dart';
-import '../providers/user_posts_provider.dart';
+import '../providers/posts_provider.dart';
+import '../providers/commented_posts_provider.dart';
 import '../auth/login_page.dart';
+import 'home_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -38,7 +42,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       }
 
       final response = await http.get(
-        Uri.parse('https://college-community-app-backend.onrender.com/api/users/profile'),
+        Uri.parse(
+            'https://college-community-app-backend.onrender.com/api/users/profile'),
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
@@ -65,6 +70,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget build(BuildContext context) {
     final token = ref.watch(authTokenProvider);
     final userPostsAsync = ref.watch(userPostsProvider);
+    final commentedPostsAsync = ref.watch(commentedPostsProvider);
+    final likedPostsAsync = ref.watch(likedPostsProvider);
 
     if (token == null || token.isEmpty) {
       return Scaffold(
@@ -90,6 +97,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   context,
                   MaterialPageRoute(builder: (_) => const LoginPage()),
                 ),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
                 child: const Text('Go to Login'),
               ),
             ],
@@ -122,6 +130,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _loadUserProfile,
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
                 child: const Text('Retry'),
               ),
             ],
@@ -134,60 +143,63 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final email = _userData?['email'] ?? 'user@example.com';
     final branch = _userData?['branch'] ?? 'N/A';
     final year = _userData?['year'] ?? 'N/A';
+    final userId = _userData?['_id'] ?? 'N/A';
+    final createdAt = _userData?['createdAt'] ?? '';
     final interests = (_userData?['interests'] as List?)?.cast<String>() ?? [];
 
     return Scaffold(
       appBar: AppBar(
-  toolbarHeight: 70,
-  title: const Text(
-    'Profile',
-    style: TextStyle(
-      fontWeight: FontWeight.bold,
-      fontSize: 30,
-      color: Colors.white, // text in white for blue gradient
-    ),
-  ),
-  backgroundColor: Colors.transparent,
-  elevation: 0,
-  flexibleSpace: Container(
-    decoration: const BoxDecoration(
-      gradient: LinearGradient(
-        colors: [Color(0xFF1565C0), Color(0xFF42A5F5)], // blue gradient
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
-    ),
-  ),
-  actions: [
-    PopupMenuButton<String>(
-      icon: const Icon(Icons.more_vert, color: Colors.white),
-      onSelected: (String value) {
-        if (value == 'logout') {
-          _showLogoutDialog(context);
-        }
-      },
-      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-        const PopupMenuItem<String>(
-          value: 'logout',
-          child: Row(
-            children: [
-              Icon(Icons.logout, color: Colors.black),
-              SizedBox(width: 12),
-              Text('Logout', style: TextStyle(color: Colors.black)),
-            ],
+        toolbarHeight: 70,
+        title: const Text(
+          'Profile',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 30,
+            color: Colors.white,
           ),
         ),
-      ],
-    ),
-  ],
-),
-
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF1565C0), Color(0xFF42A5F5)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert, color: Colors.white),
+            onSelected: (String value) {
+              if (value == 'logout') {
+                _showLogoutDialog(context);
+              }
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              const PopupMenuItem<String>(
+                value: 'logout',
+                child: Row(
+                  children: [
+                    Icon(Icons.logout, color: Colors.black),
+                    SizedBox(width: 12),
+                    Text('Logout', style: TextStyle(color: Colors.black)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
       body: Container(
         color: const Color.fromARGB(255, 208, 229, 245),
         child: RefreshIndicator(
           onRefresh: () async {
             await _loadUserProfile();
             ref.refresh(userPostsProvider);
+            ref.refresh(commentedPostsProvider);
+            ref.refresh(likedPostsProvider);
           },
           child: ScrollConfiguration(
             behavior: const ScrollBehavior().copyWith(overscroll: false),
@@ -198,7 +210,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     child: Card(
-                      color: const Color.fromARGB(255, 164, 212, 225).withOpacity(0.9),
+                      color: const Color.fromARGB(255, 164, 212, 225)
+                          .withOpacity(0.9),
                       elevation: 6,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
@@ -318,6 +331,127 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ),
                     ),
                   ),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Card(
+                      color: Colors.white.withOpacity(0.9),
+                      elevation: 4,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.info_outline,
+                                    color: Colors.purple.shade700, size: 20),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Account Information',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.purple.shade900,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Divider(height: 24),
+
+                            Row(
+                              children: [
+                                Icon(Icons.fingerprint,
+                                    color: Colors.purple.shade600, size: 18),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'User ID',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey[600],
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        userId,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.purple.shade900,
+                                          fontWeight: FontWeight.bold,
+                                          fontFamily: 'monospace',
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: Icon(Icons.copy,
+                                      color: Colors.purple.shade700, size: 18),
+                                  onPressed: () {
+                                    Clipboard.setData(
+                                        ClipboardData(text: userId));
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('✅ User ID copied!'),
+                                        duration: Duration(seconds: 1),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+
+                            Row(
+                              children: [
+                                Icon(Icons.calendar_today,
+                                    color: Colors.purple.shade600, size: 18),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Account Created',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey[600],
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        _formatCreatedDate(createdAt),
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.purple.shade900,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
                   if (interests.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.all(16),
@@ -362,6 +496,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         ],
                       ),
                     ),
+
                   Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
@@ -415,7 +550,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                     Text(
                                       'No posts yet',
                                       style: TextStyle(
-                                          fontSize: 14, color: Colors.grey[600]),
+                                          fontSize: 14,
+                                          color: Colors.grey[600]),
                                     ),
                                   ],
                                 ),
@@ -426,95 +562,192 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
                               itemCount: posts.length,
-                              itemBuilder: (context, index) {
-                                final post = posts[index];
-                                final title = post['title'] ?? 'Untitled';
-                                final description = post['description'] ?? '';
-                                final category = post['category'] ?? 'General';
-                                final createdAt = post['createdAt'] ?? '';
-
-                                return Card(
-                                  margin: const EdgeInsets.only(bottom: 12),
-                                  color: Colors.white.withOpacity(0.9),
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12)),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(12),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Expanded(
-                                              child: Text(
-                                                title,
-                                                style: const TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.black87,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(
-                                                  horizontal: 10, vertical: 4),
-                                              decoration: BoxDecoration(
-                                                color: Colors.blue.shade100
-                                                    .withOpacity(0.8),
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                              ),
-                                              child: Text(
-                                                category,
-                                                style: TextStyle(
-                                                  fontSize: 10,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.blue.shade800,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          description,
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.grey[700],
-                                            height: 1.3,
-                                          ),
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          _formatDate(createdAt),
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            color: Colors.grey[500],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
+                              itemBuilder: (context, index) =>
+                                  PostCard(post: posts[index]),
                             );
                           },
                           loading: () =>
                               const Center(child: CircularProgressIndicator()),
                           error: (error, _) => Center(
-                            child: Text('Error loading posts: $error'),
+                            child: Text('Error: $error'),
                           ),
                         ),
                       ],
                     ),
                   ),
+
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Divider(thickness: 2),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.comment,
+                                    color: Colors.orange.shade700, size: 20),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  'Commented Posts',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            commentedPostsAsync.when(
+                              data: (posts) => Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.8),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  '${posts.length}',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.orange.shade800,
+                                  ),
+                                ),
+                              ),
+                              loading: () => const SizedBox.shrink(),
+                              error: (_, __) => const SizedBox.shrink(),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        commentedPostsAsync.when(
+                          data: (posts) {
+                            if (posts.isEmpty) {
+                              return Center(
+                                child: Column(
+                                  children: [
+                                    Icon(Icons.comment_outlined,
+                                        size: 64, color: Colors.grey[400]),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      'No commented posts yet',
+                                      style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey[600]),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+
+                            return ListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: posts.length,
+                              itemBuilder: (context, index) =>
+                                  PostCard(post: posts[index]),
+                            );
+                          },
+                          loading: () =>
+                              const Center(child: CircularProgressIndicator()),
+                          error: (error, _) => Center(
+                            child: Text('Error: $error'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Divider(thickness: 2),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.favorite,
+                                    color: Colors.red.shade700, size: 20),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  'Liked Posts',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            likedPostsAsync.when(
+                              data: (posts) => Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.8),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  '${posts.length}',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.red.shade800,
+                                  ),
+                                ),
+                              ),
+                              loading: () => const SizedBox.shrink(),
+                              error: (_, __) => const SizedBox.shrink(),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        likedPostsAsync.when(
+                          data: (posts) {
+                            if (posts.isEmpty) {
+                              return Center(
+                                child: Column(
+                                  children: [
+                                    Icon(Icons.favorite_outline,
+                                        size: 64, color: Colors.grey[400]),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      'No liked posts yet',
+                                      style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey[600]),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+
+                            return ListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: posts.length,
+                              itemBuilder: (context, index) =>
+                                  PostCard(post: posts[index]),
+                            );
+                          },
+                          loading: () =>
+                              const Center(child: CircularProgressIndicator()),
+                          error: (error, _) => Center(
+                            child: Text('Error: $error'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
                   const SizedBox(height: 24),
                 ],
               ),
@@ -523,6 +756,29 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
       ),
     );
+  }
+
+  String _formatCreatedDate(String? dateString) {
+    if (dateString == null || dateString.isEmpty) return 'N/A';
+    try {
+      final date = DateTime.parse(dateString);
+      final now = DateTime.now();
+      final difference = now.difference(date);
+
+      if (difference.inDays > 365) {
+        final years = (difference.inDays / 365).floor();
+        return '$years year${years > 1 ? 's' : ''} ago (${_formatDate(dateString)})';
+      } else if (difference.inDays > 30) {
+        final months = (difference.inDays / 30).floor();
+        return '$months month${months > 1 ? 's' : ''} ago (${_formatDate(dateString)})';
+      } else if (difference.inDays > 0) {
+        return '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago (${_formatDate(dateString)})';
+      } else {
+        return 'Today (${_formatDate(dateString)})';
+      }
+    } catch (e) {
+      return dateString;
+    }
   }
 
   String _formatDate(String? dateString) {
@@ -562,9 +818,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 leading: const Icon(Icons.delete, color: Colors.red),
                 title: const Text('Remove Photo'),
                 onTap: () {
-                  setState(() {
-                    _profileImage = null;
-                  });
+                  setState(() => _profileImage = null);
                   Navigator.pop(context);
                 },
               ),
@@ -579,25 +833,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       final XFile? pickedFile = await _picker.pickImage(source: source);
 
       if (pickedFile != null) {
-        setState(() {
-          _profileImage = File(pickedFile.path);
-        });
+        setState(() => _profileImage = File(pickedFile.path));
 
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Profile photo updated!'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profile photo updated!'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
           ),
         );
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
     }
   }
 

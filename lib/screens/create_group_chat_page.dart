@@ -36,33 +36,12 @@ class _CreateGroupChatPageState extends ConsumerState<CreateGroupChatPage> {
           'year': '2nd',
         },
         {
-          '_id': '690a6d2cfe96729570e3908d',
+          '_id': '690a6a9f4202c485c0131649',
           'name': 'Pranav Rastogi',
-          'email': 'pranav12@akgec.ac.in',
+          'email': 'pranav@akgec.ac.in',
           'branch': 'CSE(DS)',
           'year': '2nd',
-        },
-        {
-          '_id': '690a6d2cfe96729570e3908e',
-          'name': 'John Doe',
-          'email': 'john@example.com',
-          'branch': 'CSE',
-          'year': '3rd',
-        },
-        {
-          '_id': '690a6d2cfe96729570e3908f',
-          'name': 'Jane Smith',
-          'email': 'jane@example.com',
-          'branch': 'ECE',
-          'year': '2nd',
-        },
-        {
-          '_id': '690a6d2cfe96729570e39090',
-          'name': 'Alex Johnson',
-          'email': 'alex@example.com',
-          'branch': 'IT',
-          'year': '1st',
-        },
+        }
       ];
       _isLoadingUsers = false;
     });
@@ -147,7 +126,7 @@ class _CreateGroupChatPageState extends ConsumerState<CreateGroupChatPage> {
   @override
 Widget build(BuildContext context) {
   return Scaffold(
-    backgroundColor: const Color(0xFF0A1931), // Dark Blue BG
+    backgroundColor: const Color(0xFF0A1931), 
 
     appBar: AppBar(
       title: const Text('Create Group Chat'),
@@ -169,10 +148,9 @@ Widget build(BuildContext context) {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
 
-                // ✅ GROUP NAME CARD
                 Card(
                   elevation: 4,
-                  color: const Color(0xFF162447), // Highlighted box
+                  color: const Color(0xFF162447),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -221,7 +199,6 @@ Widget build(BuildContext context) {
                 ),
                 const SizedBox(height: 24),
 
-                // ✅ SELECT USERS HEADER
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -253,7 +230,6 @@ Widget build(BuildContext context) {
                 ),
                 const SizedBox(height: 16),
 
-                // ✅ LIST OF USERS
                 if (_availableUsers.isEmpty)
                   Center(
                     child: Padding(
@@ -283,7 +259,7 @@ Widget build(BuildContext context) {
 
                       return Card(
                         margin: const EdgeInsets.only(bottom: 12),
-                        color: const Color(0xFF162447), // Highlight blue box
+                        color: const Color(0xFF162447),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                           side: BorderSide(
@@ -364,7 +340,6 @@ Widget build(BuildContext context) {
 
                 const SizedBox(height: 32),
 
-                // ✅ CREATE BUTTON
                 SizedBox(
                   width: double.infinity,
                   height: 56,
@@ -391,7 +366,6 @@ Widget build(BuildContext context) {
 
                 const SizedBox(height: 16),
 
-                // ✅ INFO BOX
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(

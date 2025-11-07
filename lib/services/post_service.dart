@@ -1,23 +1,71 @@
+import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:io';
-import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+const String apiUrl = 'https://college-community-app-backend.onrender.com';
+const storage = FlutterSecureStorage();
 
 class PostService {
-  static const String baseUrl = 'https://college-community-app-backend.onrender.com';
-  static String? authToken;
+  static String? _authToken;
+  static bool _isGuest = false;
+
+  // ✅ Initialize - call once in main.dart
+  static Future<void> initialize() async {
+    _authToken = await storage.read(key: 'auth_token');
+    _isGuest = false; // ✅ ALWAYS false on app start
+    print('✅ PostService initialized');
+    print('   Token: ${_authToken != null ? "loaded" : "not found"}');
+    print('   Guest: $_isGuest');
+  }
+
+  // ✅ Simple sync getters
+  static String? get authToken => _authToken;
+  static bool get isGuest => _isGuest;
+  static bool get isLoggedIn => _authToken != null && !_isGuest;
+
+  // ✅ Set guest mode (temporary)
+  static void setGuestMode() {
+    _isGuest = true;
+    _authToken = null;
+    print('👤 Guest mode activated (temporary)');
+  }
+
+  // ✅ Clear guest mode (sync, no async)
+  static void clearGuestMode() {
+    _isGuest = false;
+    print('👤 Guest mode cleared');
+  }
+
+  // ✅ Save token persistently for authenticated users
+  static Future<void> saveToken(String token) async {
+    _authToken = token;
+    _isGuest = false;
+    await storage.write(key: 'auth_token', value: token);
+    print('✅ Token saved (authenticated user)');
+  }
+
+  // ✅ Clear token on logout
+  static Future<void> clearToken() async {
+    _authToken = null;
+    _isGuest = false;
+    await storage.delete(key: 'auth_token');
+    print('🗑️ Token cleared');
+  }
 
   static void setAuthToken(String? token) {
-    authToken = token;
-    print('✅ PostService.authToken set: ${token?.substring(0, 20) ?? "null"}...');
+    if (token != null) {
+      saveToken(token);
+    }
   }
 
   static void clearAuthToken() {
-    authToken = null;
-    print('🗑️ PostService.authToken cleared');
+    _authToken = null;
+    storage.delete(key: 'auth_token');
   }
 
   static String? getAuthToken() {
-    return authToken;
+    return _authToken;
   }
 
   static Future<Map<String, dynamic>> createPost({
@@ -28,18 +76,14 @@ class PostService {
   }) async {
     try {
       print('🚀 Creating post...');
-      print('--> URL: $baseUrl/api/posts/create');
-      print('--> title: $title, description: $description, category: $category');
-      print('--> Token: ${authToken?.substring(0, 20) ?? "null"}...');
 
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('$baseUrl/api/posts/create'),
+        Uri.parse('$apiUrl/api/posts/create'),
       );
 
-      if (authToken != null && authToken!.isNotEmpty) {
-        request.headers['Authorization'] = 'Bearer $authToken';
-        print('🔐 Auth token included');
+      if (_authToken != null && _authToken!.isNotEmpty) {
+        request.headers['Authorization'] = 'Bearer $_authToken';
       }
 
       request.headers['Accept'] = 'application/json';
@@ -62,8 +106,6 @@ class PostService {
       var streamedResponse = await request.send().timeout(const Duration(seconds: 60));
       var response = await http.Response.fromStream(streamedResponse);
 
-      print('📊 Status: ${response.statusCode}');
-
       if (response.statusCode == 200 || response.statusCode == 201) {
         return {
           'success': true,
@@ -73,7 +115,7 @@ class PostService {
       } else {
         return {
           'success': false,
-          'message': 'Error: ${response.statusCode} - ${response.body}',
+          'message': 'Error: ${response.statusCode}',
         };
       }
     } catch (e) {
@@ -84,20 +126,53 @@ class PostService {
 
   static Future<List<dynamic>> getAllPosts() async {
     try {
+      final headers = {'Accept': 'application/json'};
+      if (_authToken != null) {
+        headers['Authorization'] = 'Bearer $_authToken';
+      }
+
       final response = await http.get(
-        Uri.parse('$baseUrl/api/posts'),
-        headers: {'Accept': 'application/json'},
+        Uri.parse('$apiUrl/api/posts'),
+        headers: headers,
       ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if (data is List) return data;
-        if (data is Map) {
-          if (data['posts'] != null) return data['posts'];
-          if (data['data'] != null) return data['data'];
+        List<dynamic> posts = [];
+
+        if (data is List) {
+          posts = data;
+        } else if (data is Map) {
+          posts = data['posts'] ?? data['data'] ?? [];
         }
+
+        for (int i = 0; i < posts.length; i++) {
+          if (posts[i] is Map) {
+            Map<String, dynamic> post = Map<String, dynamic>.from(posts[i]);
+
+            if (post['authorName'] == null || (post['authorName'] is String && post['authorName'].isEmpty)) {
+              if (post['author'] is Map) {
+                post['authorName'] = post['author']['name'] ??
+                    post['author']['userName'] ??
+                    post['author']['fullName'] ??
+                    'Anonymous';
+              } else if (post['author'] is String && post['author'].isNotEmpty) {
+                post['authorName'] = post['author'];
+              } else if (post['userName'] is String && post['userName'].isNotEmpty) {
+                post['authorName'] = post['userName'];
+              } else {
+                post['authorName'] = 'Anonymous';
+              }
+            }
+
+            posts[i] = post;
+          }
+        }
+
+        return posts;
+      } else {
+        return [];
       }
-      return [];
     } catch (e) {
       print('❌ Error: $e');
       return [];
