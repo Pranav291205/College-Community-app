@@ -12,7 +12,8 @@ class OthersScreen extends StatefulWidget {
   State<OthersScreen> createState() => _OthersScreenState();
 }
 
-class _OthersScreenState extends State<OthersScreen> with SingleTickerProviderStateMixin {
+class _OthersScreenState extends State<OthersScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
@@ -30,7 +31,11 @@ class _OthersScreenState extends State<OthersScreen> with SingleTickerProviderSt
     super.dispose();
   }
 
-  Widget _buildBackgroundBubble({required double size, required double x, required double y}) {
+  Widget _buildBackgroundBubble({
+    required double size,
+    required double x,
+    required double y,
+  }) {
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
@@ -70,7 +75,7 @@ class _OthersScreenState extends State<OthersScreen> with SingleTickerProviderSt
         'title': 'Mental Health & Wellness',
         'icon': Icons.spa_rounded,
         'color': const Color(0xff2ECC71),
-        'page': const MentalHealthPage(),
+        'page': MentalHealthPage(),
       },
       {
         'title': 'Leaderboard',
@@ -82,7 +87,7 @@ class _OthersScreenState extends State<OthersScreen> with SingleTickerProviderSt
         'title': 'Cultural + Tech Society',
         'icon': Icons.groups_rounded,
         'color': const Color(0xff9B59B6),
-        'page': const CulturalTechPage(),
+        'page': const SocietiesPage(),
       },
     ];
 
@@ -117,10 +122,7 @@ class _OthersScreenState extends State<OthersScreen> with SingleTickerProviderSt
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  Color(0xff141E30),
-                  Color(0xff243B55),
-                ],
+                colors: [Color(0xff141E30), Color(0xff243B55)],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
@@ -162,7 +164,7 @@ class _OthersScreenState extends State<OthersScreen> with SingleTickerProviderSt
                           color: Colors.black.withOpacity(0.15),
                           blurRadius: 10,
                           spreadRadius: 2,
-                        )
+                        ),
                       ],
                     ),
                     child: Column(

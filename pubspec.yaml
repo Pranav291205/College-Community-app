@@ -44,6 +44,8 @@ dependencies:
   shared_preferences: ^2.2.2
   animate_do: ^4.2.0
   animated_text_kit: ^4.3.0
+  fl_chart: ^1.1.1
+  google_fonts: ^6.1.0
 
 dev_dependencies:
   flutter_test:
@@ -65,7 +67,7 @@ flutter:
   assets:
     - assets/images/
     - assets/animations/
-
+    - assets/
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
