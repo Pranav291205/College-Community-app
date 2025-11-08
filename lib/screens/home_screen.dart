@@ -19,6 +19,95 @@ class HomeScreen extends ConsumerWidget {
     final postsAsync = ref.watch(postsProvider);
 
     return Scaffold(
+  appBar: AppBar(
+  elevation: 6,
+  toolbarHeight: 75,
+  centerTitle: true,
+  title: Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      ShaderMask(
+        shaderCallback: (bounds) => const LinearGradient(
+          colors: [Colors.white, Color(0xFFE3F2FD)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ).createShader(bounds),
+        child: const Text(
+          'CollabSpace',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 26,
+            letterSpacing: 1.5,
+            color: Colors.white,
+            fontFamily: 'Poppins',
+            shadows: [
+              Shadow(
+                color: Colors.black26,
+                offset: Offset(1, 2),
+                blurRadius: 4,
+              ),
+            ],
+          ),
+        ),
+      ),
+      const SizedBox(width: 8), 
+      Image.asset(
+        "assets/images/logo.png", 
+        height: 45,
+        width: 45,
+        fit: BoxFit.contain,
+      ),
+    ],
+  ),
+  flexibleSpace: Container(
+    decoration: const BoxDecoration(
+      gradient: LinearGradient(
+        colors: [Color(0xFF0A1F44), Color(0xFF1B3A73)], // ✅ Dark Blue Gradient
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+    ),
+  ),
+  
+),
+
+
+  body: Container(
+    padding: const EdgeInsets.only(top: 5),
+    decoration: const BoxDecoration(
+      gradient: LinearGradient(
+        colors: [Color.fromARGB(255, 123, 209, 255), Color.fromARGB(255, 215, 229, 241)], // ✅ Background gradient
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ),
+    ),
+    child: Stack(
+      children: [
+        RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(postsProvider);
+            await Future.delayed(const Duration(milliseconds: 800));
+          },
+          child: postsAsync.when(
+            data: (posts) {
+              if (posts.isEmpty) {
+                return ListView(
+                  children: [
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.7,
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.post_add,
+                                size: 64, color: Colors.grey[400]),
+                            const SizedBox(height: 20),
+                            Text(
+                              'No posts yet',
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w500,
     appBar: AppBar(
   elevation: 6,
   toolbarHeight: 75,
@@ -122,43 +211,46 @@ class HomeScreen extends ConsumerWidget {
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                  );
-                }
-                return ListView.builder(
-                  itemCount: posts.length,
-                  itemBuilder: (context, index) => PostCard(
-                    post: posts[index],
-                    onPostDeleted: () => ref.refresh(postsProvider),
-                  ),
-                );
-              },
-              loading: () => const Center(child: _BoldRefreshIcon()),
-              error: (err, stack) => Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.error, size: 64, color: Colors.red[400]),
-                    const SizedBox(height: 16),
-                    Text('Error: $err'),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: () => ref.invalidate(postsProvider),
-                      child: const Text('Retry'),
                     ),
                   ],
+                );
+              }
+              return ListView.builder(
+                itemCount: posts.length,
+                itemBuilder: (context, index) => PostCard(
+                  post: posts[index],
+                  onPostDeleted: () => ref.refresh(postsProvider),
                 ),
+              );
+            },
+            loading: () => const Center(child: _BoldRefreshIcon()),
+            error: (err, stack) => Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error, size: 64, color: Colors.red[400]),
+                  const SizedBox(height: 16),
+                  Text('Error: $err'),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () => ref.invalidate(postsProvider),
+                    child: const Text('Retry'),
+                  ),
+                ],
               ),
             ),
           ),
-          const MovableChatBotButton(),
-        ],
-      ),
-    );
+        ),
+        const MovableChatBotButton(),
+      ],
+    ),
+  ),
+);
+
   }
   
   void _showSearchUsersModal(BuildContext context) {
@@ -215,7 +307,7 @@ class _BoldRefreshIconState extends State<_BoldRefreshIcon>
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           gradient: const LinearGradient(
-            colors: [Color(0xFF1565C0), Color(0xFF42A5F5)],
+            colors: [Color.fromARGB(255, 37, 73, 115), Color(0xFF42A5F5)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -653,7 +745,22 @@ class _PostCardState extends State<PostCard> {
 
       return Container(
         margin: const EdgeInsets.only(bottom: 16),
-        color: Colors.white,
+      
+        decoration: BoxDecoration(
+    gradient: const LinearGradient(
+      colors: [Color.fromARGB(255, 15, 54, 125), Color.fromARGB(255, 133, 176, 249)], // 💙 Bold blue gradient
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    ),
+    borderRadius: BorderRadius.circular(16),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withOpacity(0.4),
+        blurRadius: 10,
+        offset: const Offset(2, 5),
+      )
+    ],
+  ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -682,6 +789,7 @@ class _PostCardState extends State<PostCard> {
                               ? userName
                               : 'Anonymous User',
                           style: const TextStyle(
+                            color: Colors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                           ),
@@ -691,7 +799,7 @@ class _PostCardState extends State<PostCard> {
                         Text(
                           _formatTimestamp(widget.post['createdAt']),
                           style: TextStyle(
-                            color: Colors.grey[600],
+                            color: const Color.fromARGB(255, 238, 235, 235),
                             fontSize: 12,
                           ),
                         ),
@@ -760,7 +868,7 @@ class _PostCardState extends State<PostCard> {
                       print('📥 URL: ${widget.post['mediaUrl']}');
                       return Container(
                         height: 250,
-                        color: Colors.grey[300],
+                         color: const Color.fromARGB(255, 38, 39, 40),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -773,7 +881,7 @@ class _PostCardState extends State<PostCard> {
                               child: Text(
                                 'Image unavailable',
                                 style: TextStyle(
-                                  color: Colors.grey[600],
+                                  color: const Color.fromARGB(255, 125, 130, 136),
                                   fontSize: 12,
                                 ),
                                 textAlign: TextAlign.center,
@@ -799,7 +907,7 @@ class _PostCardState extends State<PostCard> {
                                 ? Icons.pause_circle_outline
                                 : Icons.play_circle_outline,
                             size: 64,
-                            color: Colors.white,
+                            color: const Color.fromARGB(255, 50, 51, 54),
                           ),
                           onPressed: () => setState(() => _videoController!
                                   .value.isPlaying
@@ -812,7 +920,7 @@ class _PostCardState extends State<PostCard> {
                 else
                   Container(
                     height: 250,
-                    color: Colors.grey[300],
+                    color: const Color.fromARGB(255, 38, 39, 40),
                     child: Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -845,7 +953,7 @@ class _PostCardState extends State<PostCard> {
                             _isLiked
                                 ? Icons.favorite
                                 : Icons.favorite_border,
-                            color: _isLiked ? Colors.red : Colors.grey,
+                            color: _isLiked ? const Color.fromARGB(255, 190, 31, 19) :const Color.fromARGB(255, 232, 212, 212),
                             size: 22,
                           ),
                           const SizedBox(width: 8),
@@ -856,7 +964,7 @@ class _PostCardState extends State<PostCard> {
                               fontWeight: FontWeight.w600,
                               color: _isLiked
                                   ? Colors.red
-                                  : Colors.grey[700],
+                                  : const Color.fromARGB(255, 232, 212, 212),
                             ),
                           ),
                         ],
@@ -878,7 +986,7 @@ class _PostCardState extends State<PostCard> {
                             _showComments
                                 ? Icons.comment
                                 : Icons.comment_outlined,
-                            color: Colors.grey[700],
+                            color: const Color.fromARGB(255, 232, 212, 212),
                             size: 22,
                           ),
                           const SizedBox(width: 8),
@@ -887,7 +995,7 @@ class _PostCardState extends State<PostCard> {
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: Colors.grey[700],
+                                 color: const Color.fromARGB(255, 232, 212, 212),
                             ),
                           ),
                         ],
@@ -908,7 +1016,7 @@ class _PostCardState extends State<PostCard> {
                                 : Icons.thumb_down_outlined,
                             color: _isDisliked
                                 ? Colors.orange
-                                : Colors.grey[700],
+                                : const Color.fromARGB(255, 232, 212, 212),
                             size: 22,
                           ),
                           const SizedBox(width: 8),
@@ -919,7 +1027,7 @@ class _PostCardState extends State<PostCard> {
                               fontWeight: FontWeight.w600,
                               color: _isDisliked
                                   ? Colors.orange
-                                  : Colors.grey[700],
+                                  : const Color.fromARGB(255, 232, 212, 212),
                             ),
                           ),
                         ],
