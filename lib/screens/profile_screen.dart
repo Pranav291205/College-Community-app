@@ -10,7 +10,6 @@ import '../services/location_service.dart';
 import '../providers/auth_notifier.dart';
 import '../auth/login_page.dart';
 
-// ✅ USER POSTS PROVIDER
 final userPostsProvider = FutureProvider<List<dynamic>>((ref) async {
   print('📥 userPostsProvider called');
   final posts = await PostService.getUserPosts();
@@ -18,7 +17,6 @@ final userPostsProvider = FutureProvider<List<dynamic>>((ref) async {
   return posts;
 });
 
-// ✅ COMMENTED POSTS PROVIDER
 final commentedPostsProvider = FutureProvider<List<dynamic>>((ref) async {
   print('📥 commentedPostsProvider called');
   final posts = await PostService.getCommentedPosts();
@@ -26,7 +24,6 @@ final commentedPostsProvider = FutureProvider<List<dynamic>>((ref) async {
   return posts;
 });
 
-// ✅ LIKED POSTS PROVIDER
 final likedPostsProvider = FutureProvider<List<dynamic>>((ref) async {
   print('📥 likedPostsProvider called');
   final posts = await PostService.getLikedPosts();
@@ -34,7 +31,6 @@ final likedPostsProvider = FutureProvider<List<dynamic>>((ref) async {
   return posts;
 });
 
-// ✅ DISLIKED POSTS PROVIDER
 final dislikedPostsProvider = FutureProvider<List<dynamic>>((ref) async {
   print('📥 dislikedPostsProvider called');
   final posts = await PostService.getDislikedPosts();
@@ -54,8 +50,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final _picker = ImagePicker();
   Map<String, dynamic>? _userData;
   bool _isLoading = true;
-
-  // ✅ LOCATION VARIABLES
   bool _isLoadingLocation = false;
   String _userLocation = 'Not set';
   double? _latitude;
@@ -68,7 +62,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     _loadUserLocation();
   }
 
-  // ✅ LOAD LOCATION
   Future<void> _loadUserLocation() async {
     setState(() => _isLoadingLocation = true);
 
@@ -95,7 +88,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
-  // ✅ Extract city from address
   String _extractCityFromAddress(String address) {
     if (address.isEmpty || address == 'Not set') return 'Set Location';
 
@@ -149,7 +141,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
-  // ✅ DELETE POST METHOD
   Future<void> _deletePost(String postId) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -294,7 +285,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final interests = (_userData?['interests'] as List?)?.cast<String>() ?? [];
 
     return Scaffold(
-      // ✅ FIXED APP BAR - LOCATION TEXT NOW VISIBLE
       appBar: AppBar(
         toolbarHeight: 70,
         backgroundColor: Colors.transparent,
@@ -307,10 +297,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               end: Alignment.bottomRight,
             ),
           ),
-          // Custom layout inside AppBar
           child: Row(
             children: [
-              // ✅ LOCATION ON LEFT
               Expanded(
                 flex: 1,
                 child: GestureDetector(
@@ -355,7 +343,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                 ),
               ),
-              // ✅ PROFILE IN CENTER
               Expanded(
                 flex: 1,
                 child: const Center(
@@ -369,7 +356,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                 ),
               ),
-              // ✅ MENU ON RIGHT
               Expanded(
                 flex: 1,
                 child: Align(
@@ -419,7 +405,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               physics: const AlwaysScrollableScrollPhysics(),
               child: Column(
                 children: [
-                  // ✅ PROFILE HEADER
                   Container(
                     padding: const EdgeInsets.all(16),
                     child: Card(
@@ -545,7 +530,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                   ),
 
-                  // ✅ ACCOUNT INFO CARD
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Card(
@@ -664,7 +648,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
                   const SizedBox(height: 16),
 
-                  // ✅ INTERESTS
                   if (interests.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.all(16),
@@ -710,7 +693,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ),
                     ),
 
-                  // ✅ MY POSTS SECTION
                   Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
@@ -792,8 +774,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ],
                     ),
                   ),
-
-                  // ✅ COMMENTED POSTS SECTION
                   Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
@@ -880,7 +860,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                   ),
 
-                  // ✅ LIKED POSTS SECTION
                   Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
@@ -967,7 +946,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                   ),
 
-                  // ✅ DISLIKED POSTS SECTION
                   Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
@@ -1200,7 +1178,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 }
 
-// ✅ MY POST CARD - With Delete Button
 class _MyPostCard extends StatelessWidget {
   final dynamic post;
   final VoidCallback onDelete;
@@ -1337,8 +1314,6 @@ class _MyPostCard extends StatelessWidget {
     }
   }
 }
-
-// ✅ SIMPLE POST CARD - No Delete
 class _PostCardSimple extends StatelessWidget {
   final dynamic post;
 

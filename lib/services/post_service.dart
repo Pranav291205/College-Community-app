@@ -56,7 +56,6 @@ class PostService {
     return _authToken;
   }
 
-  // ✅ DEBUG - Check post structure
   static void debugPostStructure(dynamic post) {
     print('\n🔍 ===== POST STRUCTURE DEBUG =====');
     if (post is Map) {
@@ -75,10 +74,8 @@ class PostService {
     }
   }
 
-  // ✅ EXTRACT USER ID FROM POST
   static String _extractUserId(dynamic post) {
     if (post is Map) {
-      // Try multiple fields
       String? userId = post['userId'] ??
           post['authorId'] ??
           (post['author'] is Map ? post['author']['_id'] : null) ??

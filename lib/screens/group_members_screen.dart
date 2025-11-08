@@ -25,10 +25,7 @@ class _GroupMembersScreenState extends ConsumerState<GroupMembersScreen> {
     super.initState();
     _membersFuture = ChatService.getGroupMembers(widget.groupId);
   }
-
-  // ✅ Remove user from group
   Future<void> _removeUserFromGroup(String userId, String userName) async {
-    // ✅ Show confirmation dialog
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
@@ -86,8 +83,6 @@ class _GroupMembersScreenState extends ConsumerState<GroupMembersScreen> {
             ),
           );
         }
-
-        // ✅ Refresh the members list
         setState(() {
           _membersFuture = ChatService.getGroupMembers(widget.groupId);
         });
@@ -141,7 +136,6 @@ class _GroupMembersScreenState extends ConsumerState<GroupMembersScreen> {
       body: FutureBuilder<Map<String, dynamic>>(
         future: _membersFuture,
         builder: (context, snapshot) {
-          // ✅ Loading state
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(
               child: Column(
@@ -157,8 +151,6 @@ class _GroupMembersScreenState extends ConsumerState<GroupMembersScreen> {
               ),
             );
           }
-
-          // ✅ Error state
           if (snapshot.hasError) {
             return Center(
               child: Column(
@@ -191,8 +183,6 @@ class _GroupMembersScreenState extends ConsumerState<GroupMembersScreen> {
               ),
             );
           }
-
-          // ✅ Success state
           if (snapshot.hasData) {
             final groupData = snapshot.data!;
             final success = groupData['success'] ?? false;
@@ -249,8 +239,6 @@ class _GroupMembersScreenState extends ConsumerState<GroupMembersScreen> {
                 ),
               );
             }
-
-            // ✅ Get admin name for info box
             String adminName = 'Unknown';
             for (var member in members) {
               if (member is Map) {
@@ -270,7 +258,6 @@ class _GroupMembersScreenState extends ConsumerState<GroupMembersScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ✅ Group Info Card
                   Card(
                     elevation: 4,
                     color: const Color(0xFF162447),
@@ -310,8 +297,6 @@ class _GroupMembersScreenState extends ConsumerState<GroupMembersScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-
-                  // ✅ Members Header
                   const Text(
                     'Members',
                     style: TextStyle(
@@ -321,16 +306,12 @@ class _GroupMembersScreenState extends ConsumerState<GroupMembersScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // ✅ Members List with Remove Button
                   ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: members.length,
                     itemBuilder: (context, index) {
                       final member = members[index];
-
-                      // ✅ Handle different member object formats
                       final memberId = member is Map
                           ? (member['_id'] ?? member['id'] ?? '')
                           : '';
@@ -442,8 +423,6 @@ class _GroupMembersScreenState extends ConsumerState<GroupMembersScreen> {
                   ),
 
                   const SizedBox(height: 24),
-
-                  // ✅ Info Box
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
@@ -475,7 +454,6 @@ class _GroupMembersScreenState extends ConsumerState<GroupMembersScreen> {
             );
           }
 
-          // ✅ No data state
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

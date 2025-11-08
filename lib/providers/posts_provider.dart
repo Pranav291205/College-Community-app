@@ -6,7 +6,6 @@ import '../services/post_service.dart';
 
 const String apiUrl = 'https://college-community-app-backend.onrender.com';
 
-// ✅ Get current user ID from JWT token
 final currentUserIdProvider = Provider<String?>((ref) {
   final token = PostService.authToken;
   if (token != null && token.isNotEmpty) {
@@ -26,7 +25,6 @@ final currentUserIdProvider = Provider<String?>((ref) {
   return null;
 });
 
-// ✅ ALL POSTS - DEBUG VERSION
 final postsProvider = FutureProvider<List<dynamic>>((ref) async {
   print('\n📥 ===== FETCHING ALL POSTS (DEBUG) =====');
   
@@ -65,7 +63,6 @@ final postsProvider = FutureProvider<List<dynamic>>((ref) async {
       }
     }
 
-    // ✅ Process posts
     posts = posts.map((post) {
       if (post is! Map) return post;
       Map<String, dynamic> updatedPost = Map.from(post);
@@ -98,7 +95,6 @@ final postsProvider = FutureProvider<List<dynamic>>((ref) async {
   }
 });
 
-// ✅ USER'S OWN POSTS - DEBUG VERSION
 final userPostsProvider = FutureProvider<List<dynamic>>((ref) async {
   print('\n📥 ===== FETCHING USER POSTS (DEBUG) =====');
 
@@ -114,7 +110,6 @@ final userPostsProvider = FutureProvider<List<dynamic>>((ref) async {
       return [];
     }
 
-    // Try to fetch all posts first
     var response = await http.get(
       Uri.parse('$apiUrl/api/posts'),
       headers: {
@@ -131,7 +126,6 @@ final userPostsProvider = FutureProvider<List<dynamic>>((ref) async {
 
       print('📋 Total posts from server: ${allPosts.length}');
 
-      // Filter user's posts
       List<dynamic> userPosts = [];
       
       for (var post in allPosts) {
@@ -140,7 +134,6 @@ final userPostsProvider = FutureProvider<List<dynamic>>((ref) async {
         String postUserId = '';
         String postUserName = 'Unknown';
 
-        // Try to find user ID
         if (post['user'] is Map) {
           postUserId = post['user']['_id'] ?? '';
           postUserName = post['user']['name'] ?? 'Unknown';
@@ -148,7 +141,6 @@ final userPostsProvider = FutureProvider<List<dynamic>>((ref) async {
           postUserId = post['userId'];
         }
 
-        // Debug each post
         bool isMatch = postUserId.trim() == currentUserId.trim();
         print('   Post: "$postUserName" → ${isMatch ? "✅ MATCH" : "❌ no match"}');
 
@@ -173,7 +165,6 @@ final userPostsProvider = FutureProvider<List<dynamic>>((ref) async {
   }
 });
 
-// ✅ HELPER
 List<dynamic> _extractPosts(dynamic data) {
   if (data is List) return data;
   if (data is Map) {

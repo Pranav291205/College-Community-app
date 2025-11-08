@@ -5,7 +5,6 @@ import '../services/post_service.dart';
 
 const String apiUrl = 'https://college-community-app-backend.onrender.com';
 
-// ✅ Provider for posts user has liked
 final likedPostsProvider = FutureProvider<List<dynamic>>((ref) async {
   print('❤️ Fetching liked posts...');
 
@@ -33,7 +32,6 @@ final likedPostsProvider = FutureProvider<List<dynamic>>((ref) async {
         ? postsData
         : postsData['posts'] ?? postsData['data'] ?? [];
 
-    // Get current user's liked posts
     final likedResponse = await http.get(
       Uri.parse('$apiUrl/api/posts/user/liked'),
       headers: {
@@ -45,13 +43,10 @@ final likedPostsProvider = FutureProvider<List<dynamic>>((ref) async {
     if (likedResponse.statusCode != 200) {
       print('⚠️ Could not fetch user liked posts endpoint, filtering manually');
       
-      // Fallback: Filter posts where user has liked
       List<dynamic> likedPosts = [];
       for (var post in allPosts) {
         if (post is Map) {
           List likes = post['likes'] is List ? post['likes'] : [];
-          // This is a fallback - you might need the actual user ID from token
-          // For now, we'll fetch all and let user verify
         }
       }
       return likedPosts;
@@ -60,7 +55,6 @@ final likedPostsProvider = FutureProvider<List<dynamic>>((ref) async {
     final likedData = jsonDecode(likedResponse.body);
     List<dynamic> likedPosts = likedData['posts'] ?? likedData['data'] ?? [];
 
-    // Enrich posts with author info
     likedPosts = likedPosts.map((post) {
       if (post is Map) {
         Map<String, dynamic> updatedPost = Map.from(post);

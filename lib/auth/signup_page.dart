@@ -208,10 +208,10 @@ Widget build(BuildContext context) {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: const [
-                    Color(0xff0A192F), // Dark Navy
-                    Color(0xff172A45), // Deep Blue
-                    Color(0xff1F4068), // Classic Dark Blue
-                    Color(0xff0A192F), // Loop Back
+                    Color(0xff0A192F), 
+                    Color(0xff172A45), 
+                    Color(0xff1F4068),
+                    Color(0xff0A192F), 
                   ],
                   stops: [0.0, value * 0.4, value * 0.8, 1.0],
                   begin: Alignment.topLeft,

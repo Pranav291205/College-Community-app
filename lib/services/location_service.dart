@@ -2,12 +2,10 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 
 class LocationService {
-  // ✅ Get current location with address
   static Future<Map<String, dynamic>> getCurrentLocation() async {
     try {
       print('📍 Requesting location permission...');
 
-      // Check permission
       LocationPermission permission = await Geolocator.checkPermission();
 
       if (permission == LocationPermission.denied) {
@@ -32,8 +30,6 @@ class LocationService {
       }
 
       print('✅ Permission granted, fetching location...');
-
-      // Get current position
       final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
         timeLimit: const Duration(seconds: 10),
@@ -42,8 +38,6 @@ class LocationService {
       print('📍 Location found:');
       print('   Lat: ${position.latitude}');
       print('   Lon: ${position.longitude}');
-
-      // Get address from coordinates
       List<Placemark> placemarks = await placemarkFromCoordinates(
         position.latitude,
         position.longitude,
@@ -78,8 +72,6 @@ class LocationService {
       };
     }
   }
-
-  // ✅ Get address from coordinates
   static Future<String> getAddressFromCoordinates(
     double latitude,
     double longitude,
@@ -99,12 +91,10 @@ class LocationService {
     }
   }
 
-  // ✅ Check if location services are enabled
   static Future<bool> isLocationServiceEnabled() async {
     return await Geolocator.isLocationServiceEnabled();
   }
 
-  // ✅ Open location settings
   static Future<void> openLocationSettings() async {
     await Geolocator.openLocationSettings();
   }

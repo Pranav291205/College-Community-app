@@ -94,7 +94,6 @@ class _CreateGroupChatPageState extends ConsumerState<CreateGroupChatPage> {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ Watch users provider instead of hardcoding
     final usersAsync = ref.watch(recommendedUsersProvider);
 
     return Scaffold(
@@ -111,11 +110,9 @@ class _CreateGroupChatPageState extends ConsumerState<CreateGroupChatPage> {
         ),
       ),
       body: usersAsync.when(
-        // ✅ Loading state
         loading: () => const Center(
           child: CircularProgressIndicator(color: Colors.white),
         ),
-        // ✅ Error state
         error: (err, stack) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -134,14 +131,12 @@ class _CreateGroupChatPageState extends ConsumerState<CreateGroupChatPage> {
             ],
           ),
         ),
-        // ✅ Success state - render users from API
         data: (availableUsers) {
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Group Name Card
                 Card(
                   elevation: 4,
                   color: const Color(0xFF162447),
@@ -195,7 +190,6 @@ class _CreateGroupChatPageState extends ConsumerState<CreateGroupChatPage> {
                 ),
                 const SizedBox(height: 24),
 
-                // Select Users Header
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -228,7 +222,6 @@ class _CreateGroupChatPageState extends ConsumerState<CreateGroupChatPage> {
                 ),
                 const SizedBox(height: 16),
 
-                // Users List - from API
                 if (availableUsers.isEmpty)
                   Center(
                     child: Padding(
@@ -350,7 +343,6 @@ class _CreateGroupChatPageState extends ConsumerState<CreateGroupChatPage> {
 
                 const SizedBox(height: 32),
 
-                // Create Group Button
                 SizedBox(
                   width: double.infinity,
                   height: 56,

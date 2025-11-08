@@ -215,15 +215,10 @@ class _PostCardState extends State<PostCard> {
   void initState() {
     super.initState();
     print('\n🆕 PostCard initState - Post ID: ${widget.post['_id']}');
-
-    // ✅ IMPORTANT: Get user ID FIRST before anything else
     _getCurrentUserId();
 
-    // ✅ Then initialize post data
     _initializePost();
   }
-
-  // ✅ Get current user ID from JWT token
   void _getCurrentUserId() {
     try {
       final token = PostService.authToken;
@@ -254,13 +249,11 @@ class _PostCardState extends State<PostCard> {
     }
   }
 
-  // ✅ Helper method to get first character safely
   String _getInitial(String name) {
     if (name.isEmpty) return 'A';
     return name[0].toUpperCase();
   }
 
-  // ✅ Extract userId from post - LOCAL METHOD
   String _extractPostUserId() {
     try {
       if (widget.post is Map) {
@@ -278,8 +271,6 @@ class _PostCardState extends State<PostCard> {
     }
     return '';
   }
-
-  // ✅ Initialize post with likes/dislikes
   void _initializePost() {
     try {
       print('🔍 Initializing post: ${widget.post['_id']}');
@@ -311,7 +302,6 @@ class _PostCardState extends State<PostCard> {
         _isLiked = false;
       }
 
-      // ===== DISLIKES =====
       final dislikes = widget.post['dislikes'];
       print('👎 Dislikes data: $dislikes (type: ${dislikes.runtimeType})');
 
@@ -413,7 +403,6 @@ class _PostCardState extends State<PostCard> {
     }
   }
 
-  // ✅ Toggle Like
   Future<void> _toggleLike() async {
     if (_isLiking || _isDisliking) return;
     setState(() => _isLiking = true);
@@ -449,8 +438,6 @@ class _PostCardState extends State<PostCard> {
     }
     if (mounted) setState(() => _isLiking = false);
   }
-
-  // ✅ Toggle Dislike
   Future<void> _toggleDislike() async {
     if (_isDisliking || _isLiking) return;
     setState(() => _isDisliking = true);
@@ -489,9 +476,7 @@ class _PostCardState extends State<PostCard> {
     if (mounted) setState(() => _isDisliking = false);
   }
 
-  // ✅ DELETE POST METHOD - USING LOCAL EXTRACT METHOD
   Future<void> _deletePost() async {
-    // ✅ Check authorization - USING LOCAL METHOD
     final postUserId = _extractPostUserId();
     print('🔐 Current User: $_currentUserId');
     print('🔐 Post User: $postUserId');
@@ -508,8 +493,6 @@ class _PostCardState extends State<PostCard> {
       }
       return;
     }
-
-    // ✅ Show confirmation
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -597,12 +580,9 @@ class _PostCardState extends State<PostCard> {
   @override
   Widget build(BuildContext context) {
     try {
-      // ✅ Better author name handling
       final userName = widget.post['authorName'] ??
           widget.post['author'] ??
           'Anonymous User';
-
-      // ✅ Check if current user is post owner - USING LOCAL METHOD
       final postUserId = _extractPostUserId();
       final isOwner = (_currentUserId != null &&
           _currentUserId!.isNotEmpty &&
@@ -621,7 +601,6 @@ class _PostCardState extends State<PostCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ✅ Post Header with Delete Option
             Padding(
               padding: const EdgeInsets.all(12),
               child: Row(
@@ -663,7 +642,6 @@ class _PostCardState extends State<PostCard> {
                       ],
                     ),
                   ),
-                  // ✅ Three-dot menu - ONLY for post owner
                   if (isOwner)
                     PopupMenuButton<String>(
                       onSelected: (value) {
@@ -698,8 +676,6 @@ class _PostCardState extends State<PostCard> {
                 ],
               ),
             ),
-
-            // ✅ Media - IMPROVED IMAGE/VIDEO HANDLING
             if (widget.post['mediaUrl'] != null &&
                 widget.post['mediaUrl'].toString().isNotEmpty)
               if (widget.post['mediaType'] == 'image')
@@ -799,8 +775,6 @@ class _PostCardState extends State<PostCard> {
                       ),
                     ),
                   ),
-
-            // ✅ Action Buttons
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: Row(
@@ -899,8 +873,6 @@ class _PostCardState extends State<PostCard> {
                 ],
               ),
             ),
-
-            // ✅ Content
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Column(

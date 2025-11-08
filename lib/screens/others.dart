@@ -118,7 +118,6 @@ class _OthersScreenState extends State<OthersScreen>
       ),
       body: Stack(
         children: [
-          // ✅ Animated Background
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -134,7 +133,6 @@ class _OthersScreenState extends State<OthersScreen>
           _buildBackgroundBubble(size: 90, x: 80, y: 400),
           _buildBackgroundBubble(size: 130, x: 200, y: 550),
 
-          // ✅ Main UI Content
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
             child: GridView.builder(

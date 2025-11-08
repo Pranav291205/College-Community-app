@@ -18,7 +18,6 @@ class _SearchPostsModalState extends State<SearchPostsModal> {
   bool _isSearching = false;
   bool _hasSearched = false;
 
-  // ✅ PERFORM SEARCH
   Future<void> _performSearch(String query) async {
     if (query.isEmpty) {
       setState(() {
@@ -59,7 +58,6 @@ class _SearchPostsModalState extends State<SearchPostsModal> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // ✅ HEADER
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -90,7 +88,6 @@ class _SearchPostsModalState extends State<SearchPostsModal> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  // ✅ SEARCH INPUT
                   TextField(
                     controller: widget.searchController,
                     onChanged: (value) {
@@ -119,7 +116,6 @@ class _SearchPostsModalState extends State<SearchPostsModal> {
                 ],
               ),
             ),
-            // ✅ SEARCH RESULTS
             Flexible(
               child: _isSearching
                   ? const Padding(

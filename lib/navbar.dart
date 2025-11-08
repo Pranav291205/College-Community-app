@@ -125,7 +125,7 @@ class _NavBarPageState extends State<NavBarPage>
             ),
           ),
           Positioned(
-            bottom: 3,  // ✅ Adjusted for smaller navbar
+            bottom: 3,  
             child: AnimatedAlign(
               duration: const Duration(milliseconds: 400),
               curve: Curves.easeOutBack,

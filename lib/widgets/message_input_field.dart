@@ -25,7 +25,6 @@ class _MessageInputFieldState extends State<MessageInputField> {
     super.dispose();
   }
 
-  // ✅ SEND MESSAGE
   Future<void> _sendMessage() async {
     final content = _messageController.text.trim();
 
@@ -101,7 +100,6 @@ class _MessageInputFieldState extends State<MessageInputField> {
       ),
       child: Row(
         children: [
-          // Message input field
           Expanded(
             child: TextField(
               controller: _messageController,
@@ -118,7 +116,6 @@ class _MessageInputFieldState extends State<MessageInputField> {
               ),
             ),
           ),
-          // Send button
           Padding(
             padding: const EdgeInsets.only(right: 4),
             child: CircleAvatar(

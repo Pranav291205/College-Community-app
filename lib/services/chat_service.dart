@@ -7,7 +7,6 @@ const String chatApiUrl = 'https://college-community-app-backend.onrender.com';
 const Duration apiTimeout = Duration(seconds: 10);
 
 class ChatService {
-  // ✅ GET OR CREATE ONE-TO-ONE CHAT WITH ANOTHER USER
   static Future<Map<String, dynamic>> getOrCreateDirectChat(String userId) async {
     try {
       final token = PostService.authToken;
@@ -80,8 +79,6 @@ class ChatService {
       };
     }
   }
-
-  // ✅ FETCH ALL CHATS - FIXED ID EXTRACTION
   static Future<Map<String, dynamic>> fetchChats() async {
     try {
       final token = PostService.authToken;
@@ -131,8 +128,6 @@ class ChatService {
         for (var chat in chats) {
           if (chat is Map) {
             Map<String, dynamic> chatData = Map<String, dynamic>.from(chat);
-
-            // ✅ CRITICAL: Extract chatId - try multiple field names
             final chatId = chatData['_id'] ??
                 chatData['id'] ??
                 chatData['chatId'] ??
@@ -173,7 +168,7 @@ class ChatService {
             print('      Users: ${users.length}');
 
             processedChats.add({
-              'id': chatId, // ✅ This is the key field
+              'id': chatId, 
               'chatName': chatName,
               'isGroupChat': isGroupChat,
               'users': users,
@@ -219,7 +214,6 @@ class ChatService {
     }
   }
 
-  // ✅ SEND MESSAGE
   static Future<Map<String, dynamic>> sendMessage({
     required String chatId,
     required String content, required String messageId,
@@ -306,7 +300,6 @@ class ChatService {
     }
   }
 
-  // ✅ GET CHAT MESSAGES
   static Future<Map<String, dynamic>> getChatMessages(String chatId) async {
     try {
       final token = PostService.authToken;
@@ -411,7 +404,6 @@ class ChatService {
     }
   }
 
-  // ✅ RENAME GROUP CHAT
   static Future<Map<String, dynamic>> renameGroupChat({
     required String groupId,
     required String newName,
@@ -472,7 +464,6 @@ class ChatService {
     }
   }
 
-  // ✅ Create a new group
   static Future<Map<String, dynamic>> createGroup({
     required String chatName,
     required List<String> users,
@@ -510,7 +501,6 @@ class ChatService {
     }
   }
 
-  // ✅ Add user to group
   static Future<Map<String, dynamic>> addUserToGroup({
     required String groupId,
     required String userId,
@@ -546,7 +536,6 @@ class ChatService {
     }
   }
 
-  // ✅ Remove user from group
   static Future<Map<String, dynamic>> removeUserFromGroup({
     required String groupId,
     required String userId,
@@ -588,7 +577,6 @@ class ChatService {
     }
   }
 
-  // ✅ Leave group
   static Future<Map<String, dynamic>> leaveGroup(String groupId) async {
     try {
       final token = PostService.authToken;
@@ -623,7 +611,6 @@ class ChatService {
     }
   }
 
-  // ✅ Get group messages
   static Future<List<dynamic>> getGroupMessages(String messageId) async {
     try {
       final token = PostService.authToken;
@@ -662,7 +649,6 @@ class ChatService {
     }
   }
 
-  // ✅ Get all chat groups
   static Future<List<dynamic>> getChatGroups() async {
     try {
       final token = PostService.authToken;
@@ -710,7 +696,6 @@ class ChatService {
     }
   }
 
-  // ✅ Get single chat group
   static Future<Map<String, dynamic>?> getChatGroup(String groupId) async {
     try {
       print('🔍 Getting group: $groupId');
@@ -742,7 +727,6 @@ class ChatService {
     }
   }
 
-  // ✅ Get group members
   static Future<Map<String, dynamic>> getGroupMembers(String groupId) async {
     try {
       print('👥 Fetching group members...');
@@ -818,7 +802,6 @@ class ChatService {
     }
   }
 
-  // ✅ HELPER: Format message time
   static String _formatMessageTime(String? timestamp) {
     if (timestamp == null || timestamp.isEmpty) return '';
     try {

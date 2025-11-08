@@ -20,9 +20,7 @@ class PostCard extends StatefulWidget {
 class _PostCardState extends State<PostCard> {
   bool _isDeleting = false;
 
-  // ✅ Delete post
   Future<void> _deletePost() async {
-    // ✅ Check authorization - only post owner can delete
     final postUserId = widget.post['userId'] ?? 
                       widget.post['author'] ?? 
                       widget.post['_id'];
@@ -43,7 +41,6 @@ class _PostCardState extends State<PostCard> {
       return;
     }
 
-    // ✅ Show confirmation dialog
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -95,7 +92,6 @@ class _PostCardState extends State<PostCard> {
               duration: Duration(seconds: 2),
             ),
           );
-          // Callback to refresh posts
           widget.onPostDeleted();
         }
       } else {
@@ -129,7 +125,6 @@ class _PostCardState extends State<PostCard> {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ Check if current user is post owner
     final postUserId = widget.post['userId'] ?? 
                       widget.post['author'] ?? 
                       widget.post['_id'];
@@ -144,7 +139,6 @@ class _PostCardState extends State<PostCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ✅ Post Header with Three-Dot Menu
           Padding(
             padding: const EdgeInsets.all(12),
             child: Row(
@@ -172,7 +166,6 @@ class _PostCardState extends State<PostCard> {
                     ],
                   ),
                 ),
-                // ✅ Three-dot menu - ONLY for post owner
                 if (isOwner)
                   PopupMenuButton<String>(
                     onSelected: (value) {
@@ -204,8 +197,6 @@ class _PostCardState extends State<PostCard> {
               ],
             ),
           ),
-
-          // ✅ Post Content
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Text(
@@ -219,8 +210,6 @@ class _PostCardState extends State<PostCard> {
             ),
           ),
           const SizedBox(height: 12),
-
-          // ✅ Post Image (if exists)
           if (widget.post['image'] != null && 
               widget.post['image'].toString().isNotEmpty)
             ClipRRect(
@@ -260,7 +249,6 @@ class _PostCardState extends State<PostCard> {
           else
             const SizedBox.shrink(),
 
-          // ✅ Post Stats (Likes, Comments)
           Padding(
             padding: const EdgeInsets.all(12),
             child: Row(

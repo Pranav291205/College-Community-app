@@ -1,13 +1,12 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'dart:async'; // ✅ ADD THIS - needed for TimeoutException
+import 'dart:async'; 
 
 import '../services/post_service.dart';
 
 const String apiUrl = 'https://college-community-app-backend.onrender.com';
 
 class UserService {
-  // ✅ Fetch all recommended users with longer timeout
   static Future<List<dynamic>> getRecommendedUsers() async {
     try {
       print('📥 Fetching recommended users...');
@@ -59,8 +58,6 @@ class UserService {
       return [];
     }
   }
-
-  // ✅ Fetch all users (fallback endpoint)
   static Future<List<dynamic>> getAllUsers() async {
     try {
       print('📥 Fetching all users (fallback)...');

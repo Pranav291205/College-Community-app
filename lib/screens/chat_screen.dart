@@ -40,7 +40,6 @@ class _ChatPageState extends ConsumerState<ChatPage>
     super.dispose();
   }
 
-  // ✅ RENAME GROUP DIALOG
   void _showRenameDialog(String groupId, String currentName) {
     _renameController.text = currentName;
 
@@ -397,7 +396,6 @@ class _ChatPageState extends ConsumerState<ChatPage>
                                   ),
                                 );
                               },
-                              // ✅ LONG PRESS WITH RENAME & LEAVE OPTIONS
                               onLongPress: () {
                                 showModalBottomSheet(
                                   context: context,
@@ -406,7 +404,6 @@ class _ChatPageState extends ConsumerState<ChatPage>
                                     child: Column(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        // ✅ RENAME GROUP OPTION
                                         ListTile(
                                           leading: Icon(
                                             Icons.edit,
@@ -432,7 +429,6 @@ class _ChatPageState extends ConsumerState<ChatPage>
                                           color: Colors.grey,
                                           height: 1,
                                         ),
-                                        // ✅ VIEW MEMBERS OPTION
                                         ListTile(
                                           leading: Icon(Icons.people,
                                               color: Colors.blue),
@@ -461,7 +457,6 @@ class _ChatPageState extends ConsumerState<ChatPage>
                                           color: Colors.grey,
                                           height: 1,
                                         ),
-                                        // ✅ LEAVE GROUP OPTION
                                         ListTile(
                                           leading: Icon(Icons.exit_to_app,
                                               color: Colors.red),

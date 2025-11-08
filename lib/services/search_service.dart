@@ -5,7 +5,6 @@ class SearchService {
   static const String userSearchUrl = 'https://user-search-vw9w.onrender.com/smart_user_search/';
   static const String postSearchUrl = 'https://post-search-yh1s.onrender.com/search_posts_by_title/';
 
-  // ✅ Search Users
   static Future<Map<String, dynamic>> searchUsers(String query) async {
     try {
       print('🔍 Searching users: $query');
@@ -69,7 +68,6 @@ class SearchService {
     }
   }
 
-  // ✅ Search Posts
   static Future<Map<String, dynamic>> searchPosts(String query) async {
     try {
       print('🔍 Searching posts: $query');
