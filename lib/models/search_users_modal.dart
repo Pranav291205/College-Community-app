@@ -1,4 +1,4 @@
-import 'package:community_app/screens/user_profile_page';
+import 'package:community_app/screens/user_profile_page.dart';
 import 'package:flutter/material.dart';
 import '../services/search_service.dart';
 
