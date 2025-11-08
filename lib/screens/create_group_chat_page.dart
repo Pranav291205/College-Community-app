@@ -1,4 +1,5 @@
 import 'package:community_app/providers/chat_provider.dart';
+import 'package:community_app/providers/users_provider.dart'; // ✅ Add this
 import 'package:community_app/services/chat_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,40 +13,8 @@ class CreateGroupChatPage extends ConsumerStatefulWidget {
 
 class _CreateGroupChatPageState extends ConsumerState<CreateGroupChatPage> {
   final _groupNameController = TextEditingController();
-  final Set<String> _selectedUserIds = {}; 
-  List<Map<String, dynamic>> _availableUsers = [];
+  final Set<String> _selectedUserIds = {};
   bool _isLoading = false;
-  bool _isLoadingUsers = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadAvailableUsers();
-  }
-
-  Future<void> _loadAvailableUsers() async {
-    setState(() => _isLoadingUsers = true);
-
-    setState(() {
-      _availableUsers = [
-        {
-          '_id': '69073a60f4793a13be5ae0f3', 
-          'name': 'Kartikey Mishra',
-          'email': 'kartikey@akgec.ac.in',
-          'branch': 'CSE',
-          'year': '2nd',
-        },
-        {
-          '_id': '690a6a9f4202c485c0131649',
-          'name': 'Pranav Rastogi',
-          'email': 'pranav@akgec.ac.in',
-          'branch': 'CSE(DS)',
-          'year': '2nd',
-        }
-      ];
-      _isLoadingUsers = false;
-    });
-  }
 
   Future<void> _createGroup() async {
     if (_groupNameController.text.isEmpty) {
@@ -73,7 +42,7 @@ class _CreateGroupChatPageState extends ConsumerState<CreateGroupChatPage> {
     setState(() => _isLoading = true);
 
     final usersList = _selectedUserIds.toList();
-    
+
     print('📤 Creating group with:');
     print('   Name: ${_groupNameController.text}');
     print('   Users: $usersList');
@@ -81,7 +50,7 @@ class _CreateGroupChatPageState extends ConsumerState<CreateGroupChatPage> {
 
     final result = await ChatService.createGroup(
       chatName: _groupNameController.text,
-      users: usersList,  
+      users: usersList,
     );
 
     setState(() => _isLoading = false);
@@ -124,30 +93,55 @@ class _CreateGroupChatPageState extends ConsumerState<CreateGroupChatPage> {
   }
 
   @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    backgroundColor: const Color(0xFF0A1931), 
+  Widget build(BuildContext context) {
+    // ✅ Watch users provider instead of hardcoding
+    final usersAsync = ref.watch(recommendedUsersProvider);
 
-    appBar: AppBar(
-      title: const Text('Create Group Chat'),
+    return Scaffold(
       backgroundColor: const Color(0xFF0A1931),
-      elevation: 0,
-      iconTheme: const IconThemeData(color: Colors.white),
-      titleTextStyle: const TextStyle(
-        color: Colors.white,
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
+      appBar: AppBar(
+        title: const Text('Create Group Chat'),
+        backgroundColor: const Color(0xFF0A1931),
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        titleTextStyle: const TextStyle(
+          color: Colors.white,
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
       ),
-    ),
-
-    body: _isLoadingUsers
-        ? const Center(child: CircularProgressIndicator(color: Colors.white))
-        : SingleChildScrollView(
+      body: usersAsync.when(
+        // ✅ Loading state
+        loading: () => const Center(
+          child: CircularProgressIndicator(color: Colors.white),
+        ),
+        // ✅ Error state
+        error: (err, stack) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error, size: 64, color: Colors.red[400]),
+              const SizedBox(height: 16),
+              Text(
+                'Error: $err',
+                style: const TextStyle(color: Colors.white70),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () => ref.invalidate(recommendedUsersProvider),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+        // ✅ Success state - render users from API
+        data: (availableUsers) {
+          return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
+                // Group Name Card
                 Card(
                   elevation: 4,
                   color: const Color(0xFF162447),
@@ -174,13 +168,15 @@ Widget build(BuildContext context) {
                           decoration: InputDecoration(
                             hintText: 'Enter group name (e.g., CSE Batch 2023)',
                             hintStyle: TextStyle(color: Colors.white60),
-                            prefixIcon: const Icon(Icons.group, color: Colors.lightBlueAccent),
+                            prefixIcon: const Icon(Icons.group,
+                                color: Colors.lightBlueAccent),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.blue.shade200),
+                              borderSide:
+                                  BorderSide(color: Colors.blue.shade200),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -199,6 +195,7 @@ Widget build(BuildContext context) {
                 ),
                 const SizedBox(height: 24),
 
+                // Select Users Header
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -211,7 +208,8 @@ Widget build(BuildContext context) {
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         color: Colors.blue.shade900,
                         borderRadius: BorderRadius.circular(20),
@@ -230,7 +228,8 @@ Widget build(BuildContext context) {
                 ),
                 const SizedBox(height: 16),
 
-                if (_availableUsers.isEmpty)
+                // Users List - from API
+                if (availableUsers.isEmpty)
                   Center(
                     child: Padding(
                       padding: const EdgeInsets.all(32),
@@ -241,7 +240,8 @@ Widget build(BuildContext context) {
                           const SizedBox(height: 12),
                           const Text(
                             'No users available',
-                            style: TextStyle(fontSize: 14, color: Colors.white70),
+                            style: TextStyle(
+                                fontSize: 14, color: Colors.white70),
                           ),
                         ],
                       ),
@@ -251,10 +251,16 @@ Widget build(BuildContext context) {
                   ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _availableUsers.length,
+                    itemCount: availableUsers.length,
                     itemBuilder: (context, index) {
-                      final user = _availableUsers[index];
-                      final userId = user['_id'];
+                      final user = availableUsers[index];
+                      final userId = user['_id'] ?? user['id'] ?? '';
+                      final userName =
+                          user['name'] ?? user['userName'] ?? 'Unknown';
+                      final userEmail = user['email'] ?? 'N/A';
+                      final branch = user['branch'] ?? 'N/A';
+                      final year = user['year'] ?? 'N/A';
+
                       final isSelected = _selectedUserIds.contains(userId);
 
                       return Card(
@@ -275,6 +281,8 @@ Widget build(BuildContext context) {
                               isSelected
                                   ? _selectedUserIds.remove(userId)
                                   : _selectedUserIds.add(userId);
+                              print(
+                                  '${isSelected ? "❌ Removed" : "✅ Added"}: $userName');
                             });
                           },
                           leading: CircleAvatar(
@@ -282,7 +290,9 @@ Widget build(BuildContext context) {
                                 ? Colors.lightBlueAccent
                                 : Colors.blue.shade900,
                             child: Text(
-                              user['name'][0].toUpperCase(),
+                              userName.isNotEmpty
+                                  ? userName[0].toUpperCase()
+                                  : '?',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
@@ -290,7 +300,7 @@ Widget build(BuildContext context) {
                             ),
                           ),
                           title: Text(
-                            user['name'],
+                            userName,
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
@@ -302,7 +312,7 @@ Widget build(BuildContext context) {
                             children: [
                               const SizedBox(height: 4),
                               Text(
-                                user['email'],
+                                userEmail,
                                 style: const TextStyle(
                                   fontSize: 11,
                                   color: Colors.white70,
@@ -310,7 +320,7 @@ Widget build(BuildContext context) {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                '${user['branch']} - ${user['year']} Year',
+                                '$branch - $year Year',
                                 style: const TextStyle(
                                   fontSize: 11,
                                   color: Colors.white60,
@@ -340,6 +350,7 @@ Widget build(BuildContext context) {
 
                 const SizedBox(height: 32),
 
+                // Create Group Button
                 SizedBox(
                   width: double.infinity,
                   height: 56,
@@ -366,6 +377,7 @@ Widget build(BuildContext context) {
 
                 const SizedBox(height: 16),
 
+                // Info Box
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -375,7 +387,8 @@ Widget build(BuildContext context) {
                   ),
                   child: Row(
                     children: const [
-                      Icon(Icons.info, color: Colors.lightBlueAccent, size: 20),
+                      Icon(Icons.info,
+                          color: Colors.lightBlueAccent, size: 20),
                       SizedBox(width: 12),
                       Expanded(
                         child: Text(
@@ -392,8 +405,9 @@ Widget build(BuildContext context) {
                 const SizedBox(height: 16),
               ],
             ),
-          ),
-  );
-}
-
+          );
+        },
+      ),
+    );
+  }
 }

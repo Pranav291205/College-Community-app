@@ -19,6 +19,9 @@ class _ChatPageState extends ConsumerState<ChatPage>
   late AnimationController bgController;
   late Animation<double> bgAnimation;
 
+  final _renameController = TextEditingController();
+  bool _isRenaming = false;
+
   @override
   void initState() {
     super.initState();
@@ -33,19 +36,158 @@ class _ChatPageState extends ConsumerState<ChatPage>
   @override
   void dispose() {
     bgController.dispose();
+    _renameController.dispose();
     super.dispose();
+  }
+
+  // ✅ RENAME GROUP DIALOG
+  void _showRenameDialog(String groupId, String currentName) {
+    _renameController.text = currentName;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF162447),
+        title: const Text(
+          'Rename Group',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ),
+        content: TextField(
+          controller: _renameController,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            hintText: 'Enter new group name',
+            hintStyle: TextStyle(color: Colors.grey[400]),
+            filled: true,
+            fillColor: Colors.white.withOpacity(0.1),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.blue[400]!),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.blue[400]!),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.blue[600]!, width: 2),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Colors.white70),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final newName = _renameController.text.trim();
+
+              if (newName.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('❌ Group name cannot be empty'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                return;
+              }
+
+              if (newName == currentName) {
+                Navigator.pop(context);
+                return;
+              }
+
+              setState(() => _isRenaming = true);
+
+              try {
+                final result = await ChatService.renameGroupChat(
+                  groupId: groupId,
+                  newName: newName,
+                );
+
+                if (mounted) {
+                  if (result['success']) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('✅ Group renamed successfully'),
+                        backgroundColor: Colors.green,
+                        duration: Duration(seconds: 1),
+                      ),
+                    );
+                    // Refresh chats
+                    ref.refresh(chatGroupsProvider);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('❌ ${result['message']}'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('❌ Error: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+
+              if (mounted) {
+                setState(() => _isRenaming = false);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue[600],
+            ),
+            child: _isRenaming
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Text('Rename'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _leaveGroup(String groupId, String groupName) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Leave Group?'),
-        content: Text('Leave "$groupName"?'),
+        backgroundColor: const Color(0xFF162447),
+        title: const Text(
+          'Leave Group?',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Text(
+          'Leave "$groupName"?',
+          style: const TextStyle(color: Colors.white70),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Colors.white70),
+            ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
@@ -163,7 +305,6 @@ class _ChatPageState extends ConsumerState<ChatPage>
               ),
             ],
           ),
-
           RefreshIndicator(
             onRefresh: () async => ref.refresh(chatGroupsProvider),
             child: chatGroupsAsync.when(
@@ -214,8 +355,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
                         ? group.messages.last.senderName
                         : '';
                     final timeAgo = _formatTime(group.updatedAt);
-                    final memberCount =
-                        group.users.length;
+                    final memberCount = group.users.length;
 
                     final anim = CurvedAnimation(
                       parent: const AlwaysStoppedAnimation(1),
@@ -253,10 +393,11 @@ class _ChatPageState extends ConsumerState<ChatPage>
                                   context,
                                   MaterialPageRoute(
                                     builder: (_) =>
-                                        ChatDetailPage(groupId: group.id),
+                                        ChatDetailPage(groupId: group.id, chatId: '', chatName: '',),
                                   ),
                                 );
                               },
+                              // ✅ LONG PRESS WITH RENAME & LEAVE OPTIONS
                               onLongPress: () {
                                 showModalBottomSheet(
                                   context: context,
@@ -265,10 +406,43 @@ class _ChatPageState extends ConsumerState<ChatPage>
                                     child: Column(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
+                                        // ✅ RENAME GROUP OPTION
+                                        ListTile(
+                                          leading: Icon(
+                                            Icons.edit,
+                                            color: Colors.blue[400],
+                                            size: 24,
+                                          ),
+                                          title: const Text(
+                                            'Rename Group',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                          onTap: () {
+                                            Navigator.pop(context);
+                                            _showRenameDialog(
+                                              group.id,
+                                              group.chatName,
+                                            );
+                                          },
+                                        ),
+                                        const Divider(
+                                          color: Colors.grey,
+                                          height: 1,
+                                        ),
+                                        // ✅ VIEW MEMBERS OPTION
                                         ListTile(
                                           leading: Icon(Icons.people,
                                               color: Colors.blue),
-                                          title: const Text('View Members'),
+                                          title: const Text(
+                                            'View Members',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 16,
+                                            ),
+                                          ),
                                           onTap: () {
                                             Navigator.pop(context);
                                             Navigator.push(
@@ -283,10 +457,21 @@ class _ChatPageState extends ConsumerState<ChatPage>
                                             );
                                           },
                                         ),
+                                        const Divider(
+                                          color: Colors.grey,
+                                          height: 1,
+                                        ),
+                                        // ✅ LEAVE GROUP OPTION
                                         ListTile(
                                           leading: Icon(Icons.exit_to_app,
                                               color: Colors.red),
-                                          title: const Text('Leave Group'),
+                                          title: const Text(
+                                            'Leave Group',
+                                            style: TextStyle(
+                                              color: Colors.red,
+                                              fontSize: 16,
+                                            ),
+                                          ),
                                           onTap: () {
                                             Navigator.pop(context);
                                             _leaveGroup(group.id,
@@ -338,7 +523,6 @@ class _ChatPageState extends ConsumerState<ChatPage>
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
-                                    // ✅ Show member count
                                     Padding(
                                       padding: const EdgeInsets.only(top: 4),
                                       child: Text(
@@ -380,13 +564,12 @@ class _ChatPageState extends ConsumerState<ChatPage>
                                         ),
                                       ),
                                     ),
-                                ],
-                              ),
+                              ],
                             ),
                           ),
                         ),
                       ),
-                    );
+                    ));
                   },
                 );
               },
@@ -410,6 +593,9 @@ class _ChatPageState extends ConsumerState<ChatPage>
                     const SizedBox(height: 24),
                     ElevatedButton(
                       onPressed: () => ref.refresh(chatGroupsProvider),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue[600],
+                      ),
                       child: const Text('Retry'),
                     ),
                   ],

@@ -16,7 +16,7 @@ final currentUserIdProvider = Provider<String?>((ref) {
                        decodedToken['id'] ?? 
                        decodedToken['_id'] ??
                        decodedToken['sub'];
-      print('🔑 Current User ID from token: $userId');
+      print('🔑 Current User ID: $userId');
       return userId;
     } catch (e) {
       print('❌ Token decode error: $e');
@@ -26,123 +26,160 @@ final currentUserIdProvider = Provider<String?>((ref) {
   return null;
 });
 
-// ✅ ALL POSTS (for home screen)
+// ✅ ALL POSTS - DEBUG VERSION
 final postsProvider = FutureProvider<List<dynamic>>((ref) async {
-  print('📥 Fetching all posts for HOME SCREEN...');
-
+  print('\n📥 ===== FETCHING ALL POSTS (DEBUG) =====');
+  
   try {
-    final response = await http.get(
-      Uri.parse('$apiUrl/api/posts'),
-      headers: {'Accept': 'application/json'},
-    );
+    List<dynamic> posts = [];
+    List<String> endpoints = [
+      '$apiUrl/api/posts/feed',
+      '$apiUrl/posts/all',
+    ];
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      List<dynamic> posts = data is List ? data : data['posts'] ?? data['data'] ?? [];
+    for (String endpoint in endpoints) {
+      print('🔍 Trying: $endpoint');
+      
+      try {
+        var response = await http.get(
+          Uri.parse(endpoint),
+          headers: {
+            'Accept': 'application/json',
+            if (PostService.authToken != null) 'Authorization': 'Bearer ${PostService.authToken}',
+          },
+        ).timeout(const Duration(seconds: 10));
 
-      posts = posts.map((post) {
-        if (post is! Map) return post;
-        Map<String, dynamic> updatedPost = Map.from(post);
+        print('   Status: ${response.statusCode}');
 
-        String authorName = 'Anonymous';
-        if (post['user'] is Map) {
-          authorName = post['user']['name'] ?? 'Anonymous';
-        }
-        updatedPost['authorName'] = authorName;
-
-        if (updatedPost['mediaUrl'] != null) {
-          String url = updatedPost['mediaUrl'].toString().trim();
-          if (url.startsWith('/')) {
-            updatedPost['mediaUrl'] = '$apiUrl$url';
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          posts = _extractPosts(data);
+          
+          if (posts.isNotEmpty) {
+            print('   ✅ SUCCESS! Found ${posts.length} posts');
+            break;
           }
         }
-
-        return updatedPost;
-      }).toList();
-
-      print('✅ ${posts.length} posts fetched for home screen');
-      return posts;
+      } catch (e) {
+        print('   ❌ Failed: $e');
+      }
     }
-    return [];
+
+    // ✅ Process posts
+    posts = posts.map((post) {
+      if (post is! Map) return post;
+      Map<String, dynamic> updatedPost = Map.from(post);
+
+      String authorName = 'Anonymous';
+      if (post['user'] is Map) {
+        authorName = post['user']['name'] ?? post['user']['userName'] ?? 'Anonymous';
+      } else if (post['authorName'] is String && post['authorName'].isNotEmpty) {
+        authorName = post['authorName'];
+      }
+      updatedPost['authorName'] = authorName;
+
+      if (updatedPost['mediaUrl'] != null) {
+        String url = updatedPost['mediaUrl'].toString().trim();
+        if (url.isNotEmpty && !url.startsWith('http')) {
+          updatedPost['mediaUrl'] = '$apiUrl$url';
+        }
+      }
+
+      return updatedPost;
+    }).toList();
+
+    print('✅ Final posts count: ${posts.length}');
+    print('📥 ===== END FETCH =====\n');
+    return posts;
   } catch (e) {
-    print('❌ Error: $e');
+    print('❌ FATAL Error: $e');
+    print('📥 ===== END FETCH (ERROR) =====\n');
     return [];
   }
 });
 
-// ✅ USER'S OWN POSTS (for profile - FILTERED BY CURRENT USER ID)
+// ✅ USER'S OWN POSTS - DEBUG VERSION
 final userPostsProvider = FutureProvider<List<dynamic>>((ref) async {
-  print('📥 Fetching user posts for PROFILE...');
+  print('\n📥 ===== FETCHING USER POSTS (DEBUG) =====');
 
   try {
     final token = PostService.authToken;
     final currentUserId = ref.watch(currentUserIdProvider);
 
-    print('📌 DEBUG INFO:');
-    print('   Token exists: ${token != null && token.isNotEmpty}');
-    print('   Current User ID: $currentUserId');
+    print('🔐 Token: ${token != null ? "✅ exists" : "❌ null"}');
+    print('👤 User ID: ${currentUserId ?? "❌ null"}');
 
-    if (token == null || token.isEmpty) {
-      print('❌ No auth token');
+    if (token == null || currentUserId == null) {
+      print('❌ Missing credentials');
       return [];
     }
 
-    if (currentUserId == null) {
-      print('❌ No current user ID');
-      return [];
-    }
-
-    // Fetch all posts
-    final response = await http.get(
+    // Try to fetch all posts first
+    var response = await http.get(
       Uri.parse('$apiUrl/api/posts'),
       headers: {
         'Authorization': 'Bearer $token',
         'Accept': 'application/json',
       },
-    );
+    ).timeout(const Duration(seconds: 10));
+
+    print('📊 Response status: ${response.statusCode}');
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      List<dynamic> allPosts = data is List ? data : data['posts'] ?? data['data'] ?? [];
+      List<dynamic> allPosts = _extractPosts(data);
 
-      print('📋 Total posts from API: ${allPosts.length}');
+      print('📋 Total posts from server: ${allPosts.length}');
 
-      // ✅ FILTER: Keep only posts where user._id matches current user ID
+      // Filter user's posts
       List<dynamic> userPosts = [];
       
       for (var post in allPosts) {
-        if (post is Map && post['user'] is Map) {
-          String postUserId = post['user']['_id'] ?? '';
-          String postUserName = post['user']['name'] ?? 'Unknown';
-          
-          print('   Post author: $postUserName (ID: $postUserId)');
-          
-          // ✅ EXACT MATCH comparison
-          if (postUserId.trim() == currentUserId.trim()) {
-            Map<String, dynamic> updatedPost = Map.from(post);
-            updatedPost['authorName'] = postUserName;
+        if (post is! Map) continue;
 
-            if (updatedPost['mediaUrl'] != null) {
-              String url = updatedPost['mediaUrl'].toString().trim();
-              if (url.startsWith('/')) {
-                updatedPost['mediaUrl'] = '$apiUrl$url';
-              }
-            }
+        String postUserId = '';
+        String postUserName = 'Unknown';
 
-            userPosts.add(updatedPost);
-            print('      ✅ MATCHED - Added to user posts!');
-          } else {
-            print('      ❌ No match: "$postUserId" != "$currentUserId"');
-          }
+        // Try to find user ID
+        if (post['user'] is Map) {
+          postUserId = post['user']['_id'] ?? '';
+          postUserName = post['user']['name'] ?? 'Unknown';
+        } else if (post['userId'] is String) {
+          postUserId = post['userId'];
+        }
+
+        // Debug each post
+        bool isMatch = postUserId.trim() == currentUserId.trim();
+        print('   Post: "$postUserName" → ${isMatch ? "✅ MATCH" : "❌ no match"}');
+
+        if (isMatch) {
+          Map<String, dynamic> updatedPost = Map.from(post);
+          updatedPost['authorName'] = postUserName;
+          userPosts.add(updatedPost);
         }
       }
 
-      print('✅ ${userPosts.length} user posts filtered (YOUR posts only)');
+      print('✅ User posts: ${userPosts.length}');
+      print('📥 ===== END FETCH =====\n');
       return userPosts;
     }
+
+    print('❌ Failed with status: ${response.statusCode}');
     return [];
   } catch (e) {
-    print('❌ Error: $e');
+    print('❌ Exception: $e');
+    print('📥 ===== END FETCH (ERROR) =====\n');
     return [];
   }
 });
+
+// ✅ HELPER
+List<dynamic> _extractPosts(dynamic data) {
+  if (data is List) return data;
+  if (data is Map) {
+    if (data['posts'] is List) return data['posts'];
+    if (data['data'] is List) return data['data'];
+    if (data['message'] is List) return data['message'];
+  }
+  return [];
+}
