@@ -68,7 +68,40 @@ class HomeScreen extends ConsumerWidget {
       ),
     ),
   ),
-  
+  actions: [
+    PopupMenuButton<String>(
+      icon: const Icon(Icons.more_vert, color: Colors.white, size: 28),
+      onSelected: (value) {
+        if (value == 'search_users') {
+          _showSearchUsersModal(context);
+        } else if (value == 'search_posts') {
+          _showSearchPostsModal(context);
+        }
+      },
+      itemBuilder: (BuildContext context) => [
+        PopupMenuItem<String>(
+          value: 'search_users',
+          child: Row(
+            children: [
+              Icon(Icons.person_search, color: Colors.grey[700]),
+              const SizedBox(width: 12),
+              const Text('Search Users'),
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'search_posts',
+          child: Row(
+            children: [
+              Icon(Icons.search, color: Colors.grey[700]),
+              const SizedBox(width: 12),
+              const Text('Search Posts'),
+            ],
+          ),
+        ),
+      ],
+    ),
+  ],
 ),
 
 
@@ -108,108 +141,6 @@ class HomeScreen extends ConsumerWidget {
                                 fontSize: 18,
                                 color: Colors.grey[600],
                                 fontWeight: FontWeight.w500,
-    appBar: AppBar(
-  elevation: 6,
-  toolbarHeight: 75,
-  centerTitle: true,
-  title: ShaderMask(
-    shaderCallback: (bounds) => const LinearGradient(
-      colors: [Colors.white, Color(0xFFE3F2FD)],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    ).createShader(bounds),
-    child: const Text(
-      'CollabSpace',
-      style: TextStyle(
-        fontWeight: FontWeight.w800,
-        fontSize: 26,
-        letterSpacing: 1.5,
-        color: Colors.white,
-        fontFamily: 'Poppins',
-        shadows: [
-          Shadow(
-            color: Colors.black26,
-            offset: Offset(1, 2),
-            blurRadius: 4,
-          ),
-        ],
-      ),
-    ),
-  ),
-  flexibleSpace: Container(
-    decoration: const BoxDecoration(
-      gradient: LinearGradient(
-        colors: [Color(0xFF1565C0), Color(0xFF42A5F5)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
-    ),
-  ),
-  actions: [
-    PopupMenuButton<String>(
-      icon: const Icon(Icons.more_vert, color: Colors.white, size: 28),
-      onSelected: (value) {
-        if (value == 'search_users') {
-          _showSearchUsersModal(context);
-        } else if (value == 'search_posts') {
-          _showSearchPostsModal(context);
-        }
-      },
-      itemBuilder: (BuildContext context) => [
-        PopupMenuItem<String>(
-          value: 'search_users',
-          child: Row(
-            children: [
-              Icon(Icons.person_search, color: Colors.grey[700]),
-              const SizedBox(width: 12),
-              const Text('Search Users'),
-            ],
-          ),
-        ),
-        PopupMenuItem<String>(
-          value: 'search_posts',
-          child: Row(
-            children: [
-              Icon(Icons.search, color: Colors.grey[700]),
-              const SizedBox(width: 12),
-              const Text('Search Posts'),
-            ],
-          ),
-        ),
-      ],
-    ),
-  ],
-),
-
-
-      body: Stack(
-        children: [
-          RefreshIndicator(
-            onRefresh: () async {
-              ref.invalidate(postsProvider);
-              await Future.delayed(const Duration(milliseconds: 800));
-            },
-            child: postsAsync.when(
-              data: (posts) {
-                if (posts.isEmpty) {
-                  return ListView(
-                    children: [
-                      SizedBox(
-                        height: MediaQuery.of(context).size.height * 0.7,
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.post_add,
-                                  size: 64, color: Colors.grey[400]),
-                              const SizedBox(height: 16),
-                              Text(
-                                'No posts yet',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  color: Colors.grey[600],
-                                  fontWeight: FontWeight.w500,
-                                ),
                               ),
                             ),
                           ],
@@ -279,16 +210,13 @@ class _BoldRefreshIcon extends StatefulWidget {
   State<_BoldRefreshIcon> createState() => _BoldRefreshIconState();
 }
 
-class _BoldRefreshIconState extends State<_BoldRefreshIcon>
-    with SingleTickerProviderStateMixin {
+class _BoldRefreshIconState extends State<_BoldRefreshIcon> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
   void initState() {
     super.initState();
-    _controller =
-        AnimationController(vsync: this, duration: const Duration(seconds: 1))
-          ..repeat();
+    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 1))..repeat();
   }
 
   @override
@@ -347,7 +275,6 @@ class _PostCardState extends State<PostCard> {
   List<dynamic> _comments = [];
   bool _showComments = false;
   bool _loadingComments = false;
-
   bool _isLiked = false;
   int _likeCount = 0;
   bool _isLiking = false;
@@ -493,8 +420,7 @@ class _PostCardState extends State<PostCard> {
 
   Future<void> _initializeVideo() async {
     try {
-      _videoController =
-          VideoPlayerController.network(widget.post['mediaUrl']);
+      _videoController = VideoPlayerController.network(widget.post['mediaUrl']);
       await _videoController!.initialize();
       if (mounted) setState(() => _isVideoInitialized = true);
     } catch (e) {
@@ -1230,8 +1156,7 @@ class MovableChatBotButton extends StatefulWidget {
   State<MovableChatBotButton> createState() => _MovableChatBotButtonState();
 }
 
-class _MovableChatBotButtonState extends State<MovableChatBotButton>
-    with SingleTickerProviderStateMixin {
+class _MovableChatBotButtonState extends State<MovableChatBotButton> with SingleTickerProviderStateMixin {
   double x = 20;
   double y = 500;
   late AnimationController _controller;
@@ -1268,10 +1193,7 @@ class _MovableChatBotButtonState extends State<MovableChatBotButton>
           });
         },
         onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const ChatBotPage()),
-          );
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const ChatBotPage()));
         },
         child: Container(
           width: buttonSize,
