@@ -47,7 +47,6 @@ class _SearchUsersModalState extends State<SearchUsersModal> {
       ),
       child: Column(
         children: [
-          // Drag handle
           Container(
             width: 40,
             height: 4,
@@ -58,14 +57,12 @@ class _SearchUsersModalState extends State<SearchUsersModal> {
             ),
           ),
 
-          // Title
           const Text(
             'Search Users',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
 
-          // Search field
           TextField(
             controller: _searchController,
             decoration: InputDecoration(
@@ -81,7 +78,6 @@ class _SearchUsersModalState extends State<SearchUsersModal> {
           ),
           const SizedBox(height: 16),
 
-          // Results
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())

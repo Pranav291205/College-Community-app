@@ -3,12 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import '../services/chat_service.dart';
 
-// Provider for messages state
 final messagesProvider = StateNotifierProvider.family<MessagesNotifier, MessagesState, String>(
   (ref, chatId) => MessagesNotifier(chatId),
 );
 
-// Messages state class
 class MessagesState {
   final List<dynamic> messages;
   final bool isLoading;
@@ -37,7 +35,6 @@ class MessagesState {
   }
 }
 
-// Messages notifier
 class MessagesNotifier extends StateNotifier<MessagesState> {
   final String chatId;
 
@@ -108,7 +105,6 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
         print('✅ Message sent successfully');
         print('   Message ID: ${result['messageId']}');
 
-        // Reload messages
         await loadMessages();
       } else {
         print('❌ Error: ${result['message']}');
@@ -150,7 +146,6 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
     super.dispose();
   }
 
-  // ✅ SEND MESSAGE METHOD
   Future<void> _sendMessage() async {
     final content = _messageController.text.trim();
 
@@ -194,7 +189,6 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
     }
   }
 
-  // ✅ SCROLL TO BOTTOM
   void _scrollToBottom() {
     Future.delayed(const Duration(milliseconds: 100), () {
       if (_scrollController.hasClients) {
@@ -207,7 +201,6 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
     });
   }
 
-  // ✅ FORMAT MESSAGE TIME
   String _formatMessageTime(String? dateString) {
     if (dateString == null || dateString.isEmpty) return '';
     try {
@@ -230,7 +223,6 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
     final messagesState = ref.watch(messagesProvider(widget.chatId));
 
     return Scaffold(
-      // ✅ APP BAR
       appBar: AppBar(
         elevation: 6,
         backgroundColor: Colors.blue.shade600,
@@ -321,7 +313,6 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
                 )
               : Column(
                   children: [
-                    // ✅ MESSAGES LIST
                     Expanded(
                       child: messagesState.messages.isEmpty
                           ? Center(
@@ -386,7 +377,6 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      // Sender name
                                       Text(
                                         senderName,
                                         style: TextStyle(
@@ -396,7 +386,6 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
                                         ),
                                       ),
                                       const SizedBox(height: 4),
-                                      // Message bubble
                                       Container(
                                         padding: const EdgeInsets.symmetric(
                                           horizontal: 14,
@@ -429,7 +418,6 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
                                         ),
                                       ),
                                       const SizedBox(height: 4),
-                                      // Timestamp
                                       Text(
                                         _formatMessageTime(timestamp),
                                         style: TextStyle(
@@ -443,7 +431,6 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
                               },
                             ),
                     ),
-                    // ✅ MESSAGE INPUT AREA
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
@@ -455,7 +442,6 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
                       child: SafeArea(
                         child: Row(
                           children: [
-                            // Message input field
                             Expanded(
                               child: Container(
                                 decoration: BoxDecoration(
@@ -488,7 +474,6 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            // Send button
                             CircleAvatar(
                               radius: 24,
                               backgroundColor: Colors.blue.shade600,

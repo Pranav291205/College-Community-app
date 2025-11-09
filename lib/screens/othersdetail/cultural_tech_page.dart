@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// Provider for societies data
 final societiesProvider = Provider<List<Map<String, dynamic>>>((ref) {
   return [
     {
@@ -150,7 +149,6 @@ class SocietiesPage extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Society Header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
@@ -217,7 +215,6 @@ class SocietiesPage extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
-          // Event Photos - Horizontal Scroll
           SizedBox(
             height: 200,
             child: ListView.builder(
@@ -250,7 +247,6 @@ class SocietiesPage extends ConsumerWidget {
       ),
       child: Stack(
         children: [
-          // Photo Container
           ClipRRect(
             borderRadius: BorderRadius.circular(16),
             child: Container(
@@ -261,7 +257,6 @@ class SocietiesPage extends ConsumerWidget {
                 photoPath,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
-                  // Fallback design if image not found
                   return Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -300,7 +295,6 @@ class SocietiesPage extends ConsumerWidget {
             ),
           ),
 
-          // Photo Index Badge
           Positioned(
             top: 12,
             right: 12,
@@ -321,7 +315,6 @@ class SocietiesPage extends ConsumerWidget {
             ),
           ),
 
-          // Gradient Overlay at bottom
           Positioned(
             bottom: 0,
             left: 0,

@@ -33,10 +33,96 @@ class _PostScreenState extends ConsumerState<PostScreen> {
   }
 
   Future<void> _pickImage() async {
-    try {
+  try {
+    final ImageSource? source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Select Image Source',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    
+                    ListTile(
+                      leading: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.camera_alt,
+                          color: Colors.blue,
+                          size: 26,
+                        ),
+                      ),
+                      title: const Text(
+                        'Camera',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      subtitle: const Text('Take a new photo'),
+                      onTap: () => Navigator.pop(context, ImageSource.camera),
+                    ),
+                    
+                    const Divider(height: 1),
+                    
+                    ListTile(
+                      leading: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.photo_library,
+                          color: Colors.green,
+                          size: 26,
+                        ),
+                      ),
+                      title: const Text(
+                        'Gallery',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      subtitle: const Text('Choose from gallery'),
+                      onTap: () => Navigator.pop(context, ImageSource.gallery),
+                    ),
+                    
+                    const SizedBox(height: 10),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (source != null) {
       final XFile? pickedFile = await _picker.pickImage(
-        source: ImageSource.gallery,
+        source: source,
         imageQuality: 80,
+        maxWidth: 1920,
+        maxHeight: 1080,
       );
 
       if (pickedFile != null) {
@@ -44,12 +130,23 @@ class _PostScreenState extends ConsumerState<PostScreen> {
           _mediaFile = File(pickedFile.path);
           _error = null;
         });
-        print('📸 Image selected: ${pickedFile.name}');
+        print('📸 Image selected from ${source == ImageSource.camera ? "Camera" : "Gallery"}: ${pickedFile.name}');
       }
-    } catch (e) {
-      print('❌ Error picking image: $e');
+    }
+  } catch (e) {
+    print('❌ Error picking image: $e');
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
+}
+
 
   Future<void> _submitPost() async {
     if (_titleController.text.trim().isEmpty) {
@@ -73,7 +170,6 @@ class _PostScreenState extends ConsumerState<PostScreen> {
     });
 
     try {
-      // Convert array to comma-separated string
       final categoryString = _selectedCategories.join(', ');
       
       print('📝 Creating post...');

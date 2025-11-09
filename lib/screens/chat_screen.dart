@@ -8,13 +8,11 @@ import '../services/chat_service.dart';
 import 'chat_detail_page.dart';
 import 'group_members_screen.dart';
 
-// Provider for user search state
 final userSearchProvider =
     StateNotifierProvider<UserSearchNotifier, UserSearchState>(
       (ref) => UserSearchNotifier(),
     );
 
-// User search state class
 class UserSearchState {
   final List<dynamic> filteredUsers;
   final bool isSearching;
@@ -29,7 +27,6 @@ class UserSearchState {
   }
 }
 
-// User search notifier
 class UserSearchNotifier extends StateNotifier<UserSearchState> {
   UserSearchNotifier() : super(UserSearchState());
 
@@ -47,7 +44,6 @@ class UserSearchNotifier extends StateNotifier<UserSearchState> {
   }
 }
 
-// Provider for rename state
 final renameStateProvider = StateProvider<bool>((ref) => false);
 
 class ChatPage extends ConsumerStatefulWidget {

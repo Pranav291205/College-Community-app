@@ -65,7 +65,7 @@ class HomeScreen extends ConsumerWidget {
               colors: [
                 Color(0xFF0A1F44),
                 Color(0xFF1B3A73),
-              ], // ✅ Dark Blue Gradient
+              ], 
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -122,7 +122,7 @@ class HomeScreen extends ConsumerWidget {
             colors: [
               Color.fromARGB(255, 123, 209, 255),
               Color.fromARGB(255, 215, 229, 241),
-            ], // ✅ Background gradient
+            ], 
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -374,12 +374,11 @@ class _PostCardState extends State<PostCard> {
     return '';
   }
 
-  void _initializePost() async {  // ✅ Made async
+  void _initializePost() async {  
   try {
     print('🔍 Initializing post: ${widget.post['_id']}');
     print('📊 Post keys: ${widget.post.keys.toList()}');
 
-    // ===== LIKES =====
     final likes = widget.post['likes'];
     print('❤️ Likes data: $likes (type: ${likes.runtimeType})');
 
@@ -404,7 +403,6 @@ class _PostCardState extends State<PostCard> {
       _isLiked = false;
     }
 
-    // ===== DISLIKES =====
     final dislikes = widget.post['dislikes'];
     print('👎 Dislikes data: $dislikes (type: ${dislikes.runtimeType})');
 
@@ -435,13 +433,11 @@ class _PostCardState extends State<PostCard> {
       '✅ Final state - Liked: $_isLiked ($_likeCount), Disliked: $_isDisliked ($_dislikeCount)\n',
     );
 
-    // ===== VIDEO =====
     if (widget.post['mediaType'] == 'video' &&
         widget.post['mediaUrl'] != null) {
       _initializeVideo();
     }
 
-    // ===== COMMENTS - Get initial comment count =====
     final commentsData = widget.post['comments'];
     if (commentsData is List) {
       totalComments = commentsData.length;
@@ -453,13 +449,12 @@ class _PostCardState extends State<PostCard> {
     
     print('📊 Initial total comments from post data: $totalComments');
 
-    // ✅ NEW CODE - Fetch real comment count from API
     if (totalComments == 0) {
       try {
         final result = await PostService.getComments(
           postId: widget.post['_id'],
           page: 1,
-          limit: 1,  // Only need 1 comment to get the total count
+          limit: 1,  
         );
         
         if (mounted && result['success']) {
@@ -481,7 +476,7 @@ class _PostCardState extends State<PostCard> {
     _dislikeCount = 0;
     _isLiked = false;
     _isDisliked = false;
-    totalComments = 0;  // ✅ Added this
+    totalComments = 0; 
   }
 }
 
@@ -533,7 +528,6 @@ class _PostCardState extends State<PostCard> {
   Future<void> addComment(TextEditingController controller) async {
   if (controller.text.trim().isEmpty) return;
   
-  // ✅ Prevent multiple submissions
   if (_isCommenting) {
     print('⚠️ Already submitting comment, please wait...');
     return;
@@ -551,12 +545,11 @@ class _PostCardState extends State<PostCard> {
       content: controller.text.trim(),
     );
 
-    print('📊 Comment result: $result');  // ✅ ADD DEBUG
+    print('📊 Comment result: $result');  
 
     if (result['success']) {
       controller.clear();
       
-      // ✅ Refresh comments to get updated list and count
       await loadComments();
       
       if (mounted) {
@@ -1047,10 +1040,10 @@ class _PostCardState extends State<PostCard> {
                       onTap: () {
                         setState(
                           () => showComments = !showComments,
-                        ); // ✅ CORRECT
+                        ); 
                         if (showComments && comments.isEmpty) {
-                          // ✅ CORRECT
-                          loadComments(); // ✅ CORRECT (no underscore)
+                        
+                          loadComments();
                         }
                       },
                       child: Row(
@@ -1135,8 +1128,6 @@ class _PostCardState extends State<PostCard> {
 
             if (showComments) ...[
               const Divider(height: 1),
-
-              // This shows the count
               if (totalComments > 0)
                 Padding(
                   padding: const EdgeInsets.all(12),
@@ -1161,7 +1152,7 @@ class _PostCardState extends State<PostCard> {
                     ),
                   ),
                 )
-              else if (comments.isNotEmpty) // ✅ THIS SHOULD SHOW THE COMMENTS
+              else if (comments.isNotEmpty) 
                 Container(
                   constraints: const BoxConstraints(maxHeight: 250),
                   child: ListView.builder(
@@ -1169,8 +1160,6 @@ class _PostCardState extends State<PostCard> {
                     itemCount: comments.length,
                     itemBuilder: (_, index) {
                       final comment = comments[index];
-
-                      // Extract user info from API
                       final userName = comment['user'] != null
                           ? (comment['user']['name'] ?? 'Anonymous')
                           : 'Anonymous';
@@ -1233,7 +1222,7 @@ class _PostCardState extends State<PostCard> {
                     },
                   ),
                 )
-              else if (!loadingComments) // ✅ Show when no comments
+              else if (!loadingComments)
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: Text(
@@ -1283,7 +1272,7 @@ class _PostCardState extends State<PostCard> {
                         : IconButton(
                             icon: const Icon(Icons.send, color: Colors.blue),
                             onPressed: _isCommenting
-                                ? null // ✅ Disable button while submitting
+                                ? null 
                                 : () async {
                                     if (_commentController.text
                                         .trim()

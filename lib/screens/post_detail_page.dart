@@ -100,7 +100,6 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          // Gradient AppBar with post image
           SliverAppBar(
             expandedHeight: imageUrl.isNotEmpty ? 300 : 120,
             floating: false,
@@ -156,8 +155,6 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
                     ),
             ),
           ),
-
-          // Post Content
           SliverToBoxAdapter(
             child: Container(
               decoration: const BoxDecoration(
@@ -175,8 +172,6 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 20),
-
-                  // Title
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
@@ -189,8 +184,6 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
                     ),
                   ),
                   const SizedBox(height: 12),
-
-                  // Category badge
                   if (category.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -211,8 +204,6 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
                       ),
                     ),
                   const SizedBox(height: 16),
-
-                  // Author info
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Row(
@@ -253,7 +244,6 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Stats row
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Row(
@@ -266,7 +256,6 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Description
                   Container(
                     margin: const EdgeInsets.symmetric(horizontal: 16),
                     padding: const EdgeInsets.all(16),
@@ -299,8 +288,6 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
                     ),
                   ),
                   const SizedBox(height: 20),
-
-                  // Action Buttons
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Row(
@@ -308,7 +295,6 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
                         Expanded(
                           child: ElevatedButton.icon(
                             onPressed: () {
-                              // TODO: Like functionality
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(content: Text('Like feature coming soon!')),
                               );
@@ -328,7 +314,6 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
                         Expanded(
                           child: OutlinedButton.icon(
                             onPressed: () {
-                              // TODO: Comment functionality
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(content: Text('Comment feature coming soon!')),
                               );

@@ -6,9 +6,6 @@ class SearchService {
   static const String userSearchUrl = 'https://user-search-vw9w.onrender.com/smart_user_search/';
   static const String postSearchUrl = 'https://post-search-yh1s.onrender.com/search_posts_by_title/';
 
-  /// Search users using ML-powered API
-  /// @param query - User's name to search for
-  /// @returns Map with success status, users list, and count
   static Future<Map<String, dynamic>> searchUsers(String query) async {
     try {
       print('🔍 Searching users: "$query"');
@@ -34,7 +31,6 @@ class SearchService {
         final data = jsonDecode(response.body);
         print('✅ Data type: ${data.runtimeType}');
 
-        // Handle List response
         if (data is List) {
           print('✅ Found ${data.length} users (List)');
           return {
@@ -44,11 +40,9 @@ class SearchService {
           };
         }
         
-        // Handle Map response
         if (data is Map) {
           final map = Map<String, dynamic>.from(data);
           
-          // Check for 'results' field
           if (map['results'] is List) {
             print('✅ Found ${map['results'].length} users (results field)');
             return {
@@ -58,7 +52,6 @@ class SearchService {
             };
           }
           
-          // Check for 'users' field
           if (map['users'] is List) {
             print('✅ Found ${map['users'].length} users (users field)');
             return {
@@ -68,7 +61,6 @@ class SearchService {
             };
           }
           
-          // Single user object
           print('✅ Found 1 user (single object)');
           return {
             'success': true,
@@ -77,7 +69,6 @@ class SearchService {
           };
         }
 
-        // Empty response
         print('⚠️ No users found');
         return {
           'success': true,
@@ -116,9 +107,6 @@ class SearchService {
     }
   }
 
-  /// Search posts using ML-powered API
-  /// @param query - Post title to search for
-  /// @returns Map with success status, posts list, and count
   static Future<Map<String, dynamic>> searchPosts(String query) async {
     try {
       print('🔍 Searching posts: "$query"');
@@ -144,7 +132,6 @@ class SearchService {
         final data = jsonDecode(response.body);
         print('✅ Data type: ${data.runtimeType}');
 
-        // Handle List response
         if (data is List) {
           print('✅ Found ${data.length} posts (List)');
           return {
@@ -154,11 +141,9 @@ class SearchService {
           };
         }
         
-        // Handle Map response
         if (data is Map) {
           final map = Map<String, dynamic>.from(data);
           
-          // Check for 'results' field
           if (map['results'] is List) {
             print('✅ Found ${map['results'].length} posts (results field)');
             return {
@@ -168,7 +153,6 @@ class SearchService {
             };
           }
           
-          // Check for 'posts' field
           if (map['posts'] is List) {
             print('✅ Found ${map['posts'].length} posts (posts field)');
             return {
@@ -178,7 +162,6 @@ class SearchService {
             };
           }
           
-          // Single post object
           print('✅ Found 1 post (single object)');
           return {
             'success': true,
@@ -187,7 +170,6 @@ class SearchService {
           };
         }
 
-        // Empty response
         print('⚠️ No posts found');
         return {
           'success': true,

@@ -9,6 +9,7 @@ import '../services/post_service.dart';
 import '../services/location_service.dart';
 import '../providers/auth_notifier.dart';
 import '../auth/login_page.dart';
+import '../services/user_service.dart'; 
 
 final userPostsProvider = FutureProvider<List<dynamic>>((ref) async {
   print('📥 userPostsProvider called');
@@ -37,6 +38,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Map<String, dynamic>? _userData;
   bool _isLoading = true;
   bool _isLoadingLocation = false;
+  bool _isUploadingImage = false;
   String _userLocation = 'Not set';
   double? _latitude;
   double? _longitude;
@@ -408,37 +410,48 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               child: Stack(
                                 children: [
                                   CircleAvatar(
-                                    radius: 50,
-                                    backgroundColor: Colors.blue.shade100,
-                                    backgroundImage: _profileImage != null
-                                        ? FileImage(_profileImage!)
-                                        : null,
-                                    child: _profileImage == null
-                                        ? Text(
-                                            name[0].toUpperCase(),
-                                            style: const TextStyle(
-                                              fontSize: 40,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.blue,
-                                            ),
-                                          )
-                                        : null,
+  radius: 50,
+  backgroundColor: Colors.blue.shade100,
+  backgroundImage: _profileImage != null
+      ? FileImage(_profileImage!) 
+      : (_userData?['imageUrl'] != null  
+          ? NetworkImage(_userData!['imageUrl'])
+          : null) as ImageProvider?,
+  child: _profileImage == null && _userData?['imageUrl'] == null
+      ? Text(
+          name[0].toUpperCase(),
+          style: const TextStyle(
+            fontSize: 40,
+            fontWeight: FontWeight.bold,
+            color: Colors.blue,
+          ),
+        )
+      : null,
                                   ),
+
                                   Positioned(
-                                    bottom: 0,
-                                    right: 0,
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.blue[800],
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                            color: Colors.white, width: 2),
-                                      ),
-                                      padding: const EdgeInsets.all(8),
-                                      child: const Icon(Icons.camera_alt,
-                                          size: 20, color: Colors.white),
-                                    ),
-                                  ),
+  bottom: 0,
+  right: 0,
+  child: Container(
+    decoration: BoxDecoration(
+      color: Colors.blue[800],
+      shape: BoxShape.circle,
+      border: Border.all(color: Colors.white, width: 2),
+    ),
+    padding: const EdgeInsets.all(8),
+    child: _isUploadingImage 
+        ? const SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Colors.white,
+            ),
+          )
+        : const Icon(Icons.camera_alt, size: 20, color: Colors.white),
+  ),
+),
+
                                 ],
                               ),
                             ),
@@ -768,9 +781,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         const Divider(thickness: 2),
                         const SizedBox(height: 16),
                        Row(
-  mainAxisAlignment: MainAxisAlignment.spaceBetween,  // ✅ This pushes items to edges
+  mainAxisAlignment: MainAxisAlignment.spaceBetween,  
   children: [
-    // Left side - Liked Posts text
     Row(
       children: [
         Icon(Icons.favorite, color: Colors.red.shade700, size: 20),
@@ -786,7 +798,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       ],
     ),
     
-    // Right side - Refresh button
     IconButton(
       icon: const Icon(Icons.refresh, size: 20, color: Colors.black54),
       onPressed: () {
@@ -936,34 +947,71 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  Future<void> _pickImage(ImageSource source) async {
-    try {
-      final XFile? pickedFile = await _picker.pickImage(source: source);
+ Future<void> _pickImage(ImageSource source) async {
+  try {
+    final XFile? pickedFile = await _picker.pickImage(
+      source: source,
+      imageQuality: 80,
+      maxWidth: 1024,
+      maxHeight: 1024,
+    );
 
-      if (pickedFile != null) {
-        setState(() => _profileImage = File(pickedFile.path));
+    if (pickedFile != null) {
+      setState(() {
+        _profileImage = File(pickedFile.path);
+        _isUploadingImage = true; 
+      });
 
+      final result = await UserService.uploadProfileImage(File(pickedFile.path));
+
+      setState(() {
+        _isUploadingImage = false;
+      });
+
+      if (result['success']) {
+        await _loadUserProfile();
+        
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Profile photo updated!'),
+              content: Text('✅ Profile photo updated!'),
               backgroundColor: Colors.green,
               duration: Duration(seconds: 2),
             ),
           );
         }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+      } else {
+        setState(() {
+          _profileImage = null;  // Reset on failure
+        });
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('❌ ${result['message']}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
+  } catch (e) {
+    setState(() {
+      _isUploadingImage = false;
+      _profileImage = null;
+    });
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
+}
+
 
   void _showLogoutDialog(BuildContext context) {
     showDialog(

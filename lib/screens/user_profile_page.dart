@@ -19,7 +19,6 @@ class UserProfilePage extends StatelessWidget {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          // Gradient AppBar with profile header
           SliverAppBar(
             expandedHeight: 280,
             floating: false,
@@ -41,7 +40,6 @@ class UserProfilePage extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const SizedBox(height: 60),
-                    // Profile Avatar
                     CircleAvatar(
                       radius: 60,
                       backgroundColor: Colors.white,
@@ -59,7 +57,6 @@ class UserProfilePage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    // User Name
                     Text(
                       userName,
                       style: const TextStyle(
@@ -69,7 +66,6 @@ class UserProfilePage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    // User Email
                     Text(
                       userEmail,
                       style: const TextStyle(
@@ -94,7 +90,6 @@ class UserProfilePage extends StatelessWidget {
             ),
           ),
 
-          // Profile Details Section
           SliverToBoxAdapter(
             child: Container(
               decoration: const BoxDecoration(
@@ -112,7 +107,6 @@ class UserProfilePage extends StatelessWidget {
                 children: [
                   const SizedBox(height: 20),
 
-                  // Info Cards
                   _buildInfoCard(
                     icon: Icons.person,
                     title: 'Name',
@@ -143,8 +137,6 @@ class UserProfilePage extends StatelessWidget {
                     ),
 
                   const SizedBox(height: 20),
-
-                  // Action Buttons
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Row(
@@ -152,7 +144,6 @@ class UserProfilePage extends StatelessWidget {
                         Expanded(
                           child: ElevatedButton.icon(
                             onPressed: () {
-                              // TODO: Navigate to chat
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(content: Text('Chat feature coming soon!')),
                               );
@@ -172,7 +163,6 @@ class UserProfilePage extends StatelessWidget {
                         Expanded(
                           child: OutlinedButton.icon(
                             onPressed: () {
-                              // TODO: View posts
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(content: Text('View posts feature coming soon!')),
                               );

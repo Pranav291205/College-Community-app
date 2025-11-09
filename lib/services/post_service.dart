@@ -95,7 +95,6 @@ class PostService {
   File? mediaFile,
 }) async {
   try {
-    // ✅ ADD THESE DEBUG PRINTS
     print('🚀 Creating post...');
     print('📤 Title: $title');
     print('📤 Description: $description');
@@ -109,7 +108,6 @@ class PostService {
 
     if (_authToken != null && _authToken!.isNotEmpty) {
       request.headers['Authorization'] = 'Bearer $_authToken';
-      // ✅ ADD THIS DEBUG PRINT
       print('📤 Token: ${_authToken!.substring(0, 20)}...');
     }
 
@@ -118,7 +116,6 @@ class PostService {
     request.fields['description'] = description;
     request.fields['category'] = category;
 
-    // ✅ ADD THIS DEBUG PRINT
     print('📤 All fields: ${request.fields}');
 
     if (mediaFile != null) {
@@ -134,7 +131,6 @@ class PostService {
   String fileName = mediaFile.path.split('/').last;
   String extension = fileName.split('.').last.toLowerCase();
   
-  // ✅ Determine correct MIME type
   String contentType;
   if (extension == 'jpg' || extension == 'jpeg') {
     contentType = 'image/jpeg';
@@ -155,13 +151,12 @@ class PostService {
   print('📤 File: $fileName');
   print('📤 Content-Type: $contentType');
   
-  // ✅ Add file with proper content type
   request.files.add(
     await http.MultipartFile.fromPath(
       'media',
       mediaFile.path,
       filename: fileName,
-      contentType: MediaType.parse(contentType),  // ✅ This is critical!
+      contentType: MediaType.parse(contentType),  
     ),
   );
 }
@@ -173,7 +168,6 @@ class PostService {
 
     print('📊 Status: ${response.statusCode}');
     
-    // ✅ ADD THIS DEBUG PRINT
     print('📥 Response body: ${response.body}');
 
     if (response.statusCode == 200 || response.statusCode == 201) {
@@ -184,7 +178,6 @@ class PostService {
         'data': jsonDecode(response.body),
       };
     } else {
-      // ✅ ADD THIS DEBUG PRINT
       print('❌ Error response: ${response.body}');
       return {
         'success': false,
@@ -296,7 +289,7 @@ class PostService {
     print('🔥 🔑 Token: ${_authToken!.substring(0, 20)}...');
 
     final response = await http.get(
-      Uri.parse('$apiUrl/api/posts/mine'),  // ✅ Correct endpoint from your API
+      Uri.parse('$apiUrl/api/posts/mine'), 
       headers: {
         'Authorization': 'Bearer $_authToken',
         'Accept': 'application/json',
@@ -315,17 +308,26 @@ class PostService {
         
         print('🔥 ✅ ${posts.length} USER POSTS FOUND!');
         
-        // Process each post to ensure proper structure
         for (int i = 0; i < posts.length; i++) {
           if (posts[i] is Map) {
             Map<String, dynamic> post = Map<String, dynamic>.from(posts[i]);
             
-            // Extract author name from user object
             if (post['user'] is Map) {
               post['authorName'] = post['user']['name'] ?? 'Anonymous';
               post['authorEmail'] = post['user']['email'] ?? '';
             } else if (post['authorName'] == null || post['authorName'] == '') {
               post['authorName'] = 'Anonymous';
+            }
+            
+            if (post['category'] != null) {
+              if (post['category'] is List) {
+                post['category'] = (post['category'] as List).join(', ');
+                print('📝 Converted category array to string: ${post['category']}');
+              } else if (post['category'] is! String) {
+                post['category'] = post['category'].toString();
+              }
+            } else {
+              post['category'] = 'General';  
             }
             
             posts[i] = post;
@@ -347,6 +349,7 @@ class PostService {
     return [];
   }
 }
+
 
 
   static Future<Map<String, dynamic>> getUserEngagement() async {
@@ -419,7 +422,7 @@ class PostService {
       return [];
     }
 
-    print('🔥 📥 FETCHING LIKED POSTS FROM API...');  // ✅ Very visible log
+    print('🔥 📥 FETCHING LIKED POSTS FROM API...');
     print('🔥 🔗 URL: $apiUrl/api/posts/liked');
     print('🔥 🔑 Token: ${_authToken!.substring(0, 20)}...');
 
@@ -443,7 +446,6 @@ class PostService {
         
         print('🔥 ✅ ${likedPosts.length} LIKED POSTS FOUND!');
         
-        // Process posts
         for (int i = 0; i < likedPosts.length; i++) {
           if (likedPosts[i] is Map) {
             Map<String, dynamic> post = Map<String, dynamic>.from(likedPosts[i]);
@@ -452,6 +454,17 @@ class PostService {
               post['authorName'] = post['user']['name'] ?? 'Anonymous';
             } else if (post['authorName'] == null || post['authorName'] == '') {
               post['authorName'] = 'Anonymous';
+            }
+            
+            if (post['category'] != null) {
+              if (post['category'] is List) {
+                post['category'] = (post['category'] as List).join(', ');
+                print('📝 Converted liked post category: ${post['category']}');
+              } else if (post['category'] is! String) {
+                post['category'] = post['category'].toString();
+              }
+            } else {
+              post['category'] = 'General';
             }
             
             likedPosts[i] = post;
@@ -472,6 +485,7 @@ class PostService {
     return [];
   }
 }
+
 
 
   static Future<Map<String, dynamic>> getComments({
@@ -767,7 +781,6 @@ class PostService {
       return {'success': false, 'message': 'Error: $e'};
     }
   }
-  // In PostService class
 static Future<Map<String, dynamic>> getPostById(String postId) async {
   try {
     final token = authToken;
@@ -818,7 +831,6 @@ static Future<Map<String, dynamic>> getPostById(String postId) async {
       return {'success': false, 'message': 'Not authenticated'};
     }
 
-    // ✅ Decode JWT to get user ID
     Map<String, dynamic> decodedToken = JwtDecoder.decode(_authToken!);
     String userId = decodedToken['userId'] ?? decodedToken['id'] ?? '';
 
@@ -835,7 +847,7 @@ static Future<Map<String, dynamic>> getPostById(String postId) async {
       },
       body: jsonEncode({
         'postId': postId,
-        'user': userId,    // ✅ ADD THIS - user ID from token
+        'user': userId, 
         'text': content,
       }),
     ).timeout(const Duration(seconds: 30));

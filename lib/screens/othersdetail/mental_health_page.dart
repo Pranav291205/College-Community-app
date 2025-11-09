@@ -30,7 +30,6 @@ class Program {
   });
 }
 
-// Provider for mental health professionals
 final professionalsProvider = Provider<List<Professional>>((ref) {
   return [
     Professional(
@@ -64,7 +63,6 @@ final professionalsProvider = Provider<List<Professional>>((ref) {
   ];
 });
 
-// Provider for programs
 final programsProvider = Provider<List<Program>>((ref) {
   return [
     Program(
@@ -133,7 +131,6 @@ class MentalHealthPage extends ConsumerWidget {
     );
   }
 
-  // ✅ FIXED VERSION — No more overflow
   Widget _professionalCard(BuildContext context, Professional p) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),

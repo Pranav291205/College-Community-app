@@ -18,7 +18,7 @@ class MultiSelectCategoriesDropdown extends StatefulWidget {
 class _MultiSelectCategoriesDropdownState
     extends State<MultiSelectCategoriesDropdown> {
   static const List<String> _allCategories = [
-        "Artificial Intelligence",
+        "Artificial Intelligence (AI)",
         "Technical",
         "Machine Learning",
         "Data Science",

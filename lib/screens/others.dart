@@ -6,7 +6,6 @@ import 'othersdetail/mental_health_page.dart';
 import 'othersdetail/leaderboard_page.dart';
 import 'othersdetail/cultural_tech_page.dart';
 
-// Provider for menu items
 final menuItemsProvider = Provider<List<Map<String, dynamic>>>((ref) {
   return [
     {

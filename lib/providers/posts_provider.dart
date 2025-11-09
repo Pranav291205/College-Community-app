@@ -32,7 +32,7 @@ final postsProvider = FutureProvider<List<dynamic>>((ref) async {
     List<dynamic> posts = [];
     List<String> endpoints = [
       '$apiUrl/api/posts/feed',
-      '$apiUrl/posts/all',
+      '$apiUrl/api/posts/all',
     ];
 
     for (String endpoint in endpoints) {

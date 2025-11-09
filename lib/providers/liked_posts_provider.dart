@@ -16,7 +16,6 @@ final likedPostsProvider = FutureProvider<List<dynamic>>((ref) async {
       return [];
     }
 
-    // Get all posts
     final postsResponse = await http.get(
       Uri.parse('$apiUrl/api/posts'),
       headers: {'Accept': 'application/json'},

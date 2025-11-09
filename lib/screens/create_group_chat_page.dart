@@ -369,7 +369,6 @@ class _CreateGroupChatPageState extends ConsumerState<CreateGroupChatPage> {
 
                 const SizedBox(height: 16),
 
-                // Info Box
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(

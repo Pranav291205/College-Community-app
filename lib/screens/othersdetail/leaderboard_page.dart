@@ -2,7 +2,6 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// Provider for placement data
 final placementsDataProvider = Provider<List<Map<String, String>>>((ref) {
   return [
     {
@@ -99,7 +98,6 @@ final placementsDataProvider = Provider<List<Map<String, String>>>((ref) {
   ];
 });
 
-// Provider for bar chart data
 final barChartDataProvider = Provider<List<BarChartGroupData>>((ref) {
   return [
     BarChartGroupData(
@@ -125,7 +123,6 @@ final barChartDataProvider = Provider<List<BarChartGroupData>>((ref) {
   ];
 });
 
-// Provider for line chart data
 final lineChartDataProvider = Provider<List<FlSpot>>((ref) {
   return const [
     FlSpot(0, 20),
@@ -161,21 +158,18 @@ class LeaderboardPage extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // First Graph - Placement Statistics
               _buildGraphCard(
                 title: 'Placement Statistics 2024',
                 graph: _buildBarChart(ref),
               ),
               const SizedBox(height: 24),
 
-              // Second Graph - Branch-wise Placements
               _buildGraphCard(
                 title: 'Branch-wise Placements',
                 graph: _buildLineChart(ref),
               ),
               const SizedBox(height: 24),
 
-              // Top Placements Title
               const Text(
                 'Top Placements',
                 style: TextStyle(
@@ -186,7 +180,6 @@ class LeaderboardPage extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
 
-              // Horizontal Scrollable Cards
               SizedBox(
                 height: 240,
                 child: ListView.builder(
@@ -372,7 +365,6 @@ class LeaderboardPage extends ConsumerWidget {
               children: [
                 Row(
                   children: [
-                    // Person's Image
                     Container(
                       width: 70,
                       height: 70,
@@ -388,7 +380,6 @@ class LeaderboardPage extends ConsumerWidget {
                           data['image']!,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
-                            // Fallback to gradient with initial if image not found
                             return Container(
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
@@ -418,7 +409,6 @@ class LeaderboardPage extends ConsumerWidget {
                     ),
                     const SizedBox(width: 16),
 
-                    // Person's Details
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -451,7 +441,6 @@ class LeaderboardPage extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
 
-                // Company Tag
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
@@ -483,7 +472,6 @@ class LeaderboardPage extends ConsumerWidget {
                 ),
                 const SizedBox(height: 12),
 
-                // Package Section
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(
@@ -527,7 +515,6 @@ class LeaderboardPage extends ConsumerWidget {
             ),
           ),
 
-          // Rank Badge
           Positioned(
             top: 8,
             right: 8,

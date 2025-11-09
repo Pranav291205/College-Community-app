@@ -5,7 +5,6 @@ import 'package:community_app/screens/othersdetail/academics_screens/mechanical_
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// Provider for academic blocks data
 final academicBlocksProvider = Provider<List<Map<String, dynamic>>>((ref) {
   return [
     {
@@ -45,7 +44,7 @@ class AcademicFeature extends ConsumerWidget {
           style: TextStyle(
             color: Colors.white,
             fontSize: 24,
-            fontWeight: FontWeight.w900, // visibly bold
+            fontWeight: FontWeight.w900,
             letterSpacing: 1.3,
             shadows: [
               Shadow(
@@ -63,7 +62,7 @@ class AcademicFeature extends ConsumerWidget {
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                Color(0xFF09276D), // deep AKGEC blue
+                Color(0xFF09276D), 
                 Color(0xFF1661B2),
                 Color(0xFF09276D),
               ],
@@ -83,17 +82,15 @@ class AcademicFeature extends ConsumerWidget {
 
       body: Stack(
         children: [
-          // Full background image
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
-                image: AssetImage('assets/images/academics.jpg'), //  your JPG path
-                fit: BoxFit.cover, // makes it cover full screen
+                image: AssetImage('assets/images/academics.jpg'), 
+                fit: BoxFit.cover, 
               ),
             ),
           ),
 
-          //  Grid content on top of background
           Center(
             child: Padding(
               padding: const EdgeInsets.all(20),
@@ -146,12 +143,12 @@ class AcademicFeature extends ConsumerWidget {
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 22, // slightly larger for visibility
-              fontWeight: FontWeight.w900, // extra bold
-              letterSpacing: 1.3, // adds a clean modern feel
+              fontSize: 22, 
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.3,
               shadows: [
                 Shadow(
-                  color: Colors.black54, // subtle text glow
+                  color: Colors.black54, 
                   offset: Offset(2, 2),
                   blurRadius: 4,
                 ),

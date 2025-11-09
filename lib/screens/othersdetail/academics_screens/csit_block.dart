@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// Provider for CS/IT faculty list
 final csitFacultyListProvider = Provider<List<Map<String, String>>>((ref) {
   return const [
     {
@@ -100,10 +99,10 @@ class CsitBlock extends ConsumerWidget {
         padding: const EdgeInsets.all(12.0),
         child: GridView.builder(
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2, // two cards in each row
+            crossAxisCount: 2, 
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: 0.78, // adjust for text & image fit
+            childAspectRatio: 0.78, 
           ),
           itemCount: facultyList.length,
           itemBuilder: (context, index) {
@@ -120,7 +119,6 @@ class CsitBlock extends ConsumerWidget {
     );
   }
 
-  // Widget builder for each faculty card
   Widget _buildFacultyCard({
     required String name,
     required String imagePath,
@@ -142,7 +140,6 @@ class CsitBlock extends ConsumerWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          // Faculty Image
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
             child: Image.asset(
@@ -154,7 +151,6 @@ class CsitBlock extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
 
-          // Faculty Name
           Text(
             name,
             style: const TextStyle(
@@ -167,7 +163,6 @@ class CsitBlock extends ConsumerWidget {
 
           const SizedBox(height: 6),
 
-          // Subject
           Text(
             subject,
             style: const TextStyle(
@@ -180,7 +175,6 @@ class CsitBlock extends ConsumerWidget {
 
           const SizedBox(height: 4),
 
-          // Experience
           Text(
             'Experience: $experience',
             style: const TextStyle(
