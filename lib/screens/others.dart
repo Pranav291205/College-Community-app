@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'othersdetail/academic_feature.dart';
@@ -52,7 +53,7 @@ class _OthersScreenState extends ConsumerState<OthersScreen>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 18),
+      duration: const Duration(seconds: 20),
     )..repeat();
   }
 
@@ -62,14 +63,14 @@ class _OthersScreenState extends ConsumerState<OthersScreen>
     super.dispose();
   }
 
-  Widget _buildBackgroundBubble({
+  Widget _buildFloatingGlow({
     required double size,
     required double x,
     required double y,
   }) {
     return AnimatedBuilder(
       animation: _controller,
-      builder: (context, child) {
+      builder: (_, __) {
         return Positioned(
           left: x + sin(_controller.value * 2 * pi) * 20,
           top: y + cos(_controller.value * 2 * pi) * 20,
@@ -78,13 +79,9 @@ class _OthersScreenState extends ConsumerState<OthersScreen>
             height: size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: [
-                  Colors.white.withOpacity(0.15),
-                  Colors.white.withOpacity(0.05),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+              gradient: RadialGradient(
+                colors: [Colors.white.withOpacity(0.15), Colors.transparent],
+                radius: 0.9,
               ),
             ),
           ),
@@ -98,24 +95,31 @@ class _OthersScreenState extends ConsumerState<OthersScreen>
     final menuItems = ref.watch(menuItemsProvider);
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        centerTitle: true,
         title: const Text(
-          "EXPLORE",
+          "CollabSpace",
           style: TextStyle(
+            color: Colors.white,
             fontSize: 26,
             fontWeight: FontWeight.w900,
-            letterSpacing: 1.2,
-            color: Colors.white,
+            letterSpacing: 1.4,
+            shadows: [
+              Shadow(
+                color: Colors.black45,
+                offset: Offset(1, 2),
+                blurRadius: 4,
+              ),
+            ],
           ),
         ),
-        centerTitle: true,
-        elevation: 8,
-        toolbarHeight: 65,
-        shadowColor: Colors.black54,
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [Color(0xff1e3c72), Color(0xff2a5298), Color(0xff000428)],
+              colors: [Color(0xff5B2C6F), Color(0xff6A1B9A), Color(0xff4A148C)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -124,89 +128,139 @@ class _OthersScreenState extends ConsumerState<OthersScreen>
       ),
       body: Stack(
         children: [
+          // Background gradient
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xff141E30), Color(0xff243B55)],
+                colors: [
+                  Color(0xff3E1E68),
+                  Color(0xff2B1055),
+                  Color(0xff120A2A),
+                ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
             ),
           ),
 
-          _buildBackgroundBubble(size: 120, x: 30, y: 80),
-          _buildBackgroundBubble(size: 160, x: 250, y: 140),
-          _buildBackgroundBubble(size: 90, x: 80, y: 400),
-          _buildBackgroundBubble(size: 130, x: 200, y: 550),
+          // Floating glow effects
+          _buildFloatingGlow(size: 130, x: 40, y: 120),
+          _buildFloatingGlow(size: 180, x: 250, y: 250),
+          _buildFloatingGlow(size: 100, x: 80, y: 480),
+          _buildFloatingGlow(size: 160, x: 200, y: 620),
 
+          // Main grid content
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            padding: const EdgeInsets.fromLTRB(18, 110, 18, 18),
             child: GridView.builder(
               physics: const BouncingScrollPhysics(),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 0.85,
+                crossAxisSpacing: 18,
+                mainAxisSpacing: 18,
+                childAspectRatio: 0.95,
               ),
               itemCount: menuItems.length,
               itemBuilder: (context, index) {
                 final item = menuItems[index];
+                final color = item['color'] as Color;
 
                 return GestureDetector(
                   onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => item['page'] as Widget),
                   ),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: Colors.white.withOpacity(0.2)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
-                          blurRadius: 10,
-                          spreadRadius: 2,
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: (item['color'] as Color).withOpacity(0.25),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            item['icon'] as IconData,
-                            size: 36,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Text(
-                            item['title'] as String,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                  child: _buildMenuTile(
+                    icon: item['icon'] as IconData,
+                    title: item['title'] as String,
+                    color: color,
                   ),
                 );
               },
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMenuTile({
+    required IconData icon,
+    required String title,
+    required Color color,
+  }) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              colors: [
+                Colors.white.withOpacity(0.12),
+                Colors.white.withOpacity(0.06),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            border: Border.all(color: Colors.white.withOpacity(0.15)),
+            boxShadow: [
+              BoxShadow(
+                color: color.withOpacity(0.25),
+                blurRadius: 12,
+                offset: const Offset(2, 4),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Icon
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: color.withOpacity(0.25),
+                  ),
+                  padding: const EdgeInsets.all(16),
+                  child: Icon(icon, size: 38, color: Colors.white),
+                ),
+                const SizedBox(height: 14),
+                // Title
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black45,
+                        offset: Offset(1, 1),
+                        blurRadius: 3,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Decorative line
+                Container(
+                  height: 3,
+                  width: 40,
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

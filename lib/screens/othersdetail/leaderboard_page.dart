@@ -1,8 +1,10 @@
+import 'dart:ui';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// Provider for placement data
+// --- Providers (Unchanged) ---
+
 final placementsDataProvider = Provider<List<Map<String, String>>>((ref) {
   return [
     {
@@ -22,7 +24,7 @@ final placementsDataProvider = Provider<List<Map<String, String>>>((ref) {
     {
       'name': 'Soumya Maheshwari',
       'branch': 'Computer Science',
-      'company': 'Googe',
+      'company': 'Google',
       'package': '₹13.2 LPA',
       'image': 'assets/3.png',
     },
@@ -54,78 +56,38 @@ final placementsDataProvider = Provider<List<Map<String, String>>>((ref) {
       'package': '₹34 LPA',
       'image': 'assets/7.png',
     },
-    {
-      'name': 'PARAS PANDEY',
-      'branch': 'Electronics',
-      'company': 'Intel',
-      'package': '₹32 LPA',
-      'image': 'assets/8.png',
-    },
-    {
-      'name': 'SHREYANSHI SINGH ',
-      'branch': 'Computer Science',
-      'company': 'PhonePe',
-      'package': '₹30 LPA',
-      'image': 'assets/9.png',
-    },
-    {
-      'name': 'APOORV MAHESHWARI B. ',
-      'branch': 'Information Technology',
-      'company': 'Salesforce',
-      'package': '₹28 LPA',
-      'image': 'assets/10.png',
-    },
-    {
-      'name': 'DEEPAK SHARMA',
-      'branch': 'Computer Science',
-      'company': 'Oracle',
-      'package': '₹26 LPA',
-      'image': 'assets/11.png',
-    },
-    {
-      'name': 'MADHUR VASHISTHA B. ',
-      'branch': 'Electronics',
-      'company': 'Qualcomm',
-      'package': '₹25 LPA',
-      'image': 'assets/12.png',
-    },
-    {
-      'name': 'MUSKAN AGRAWAL ',
-      'branch': 'Computer Science',
-      'company': 'LinkedIn',
-      'package': '₹24 LPA',
-      'image': 'assets/13.png',
-    },
   ];
 });
 
-// Provider for bar chart data
 final barChartDataProvider = Provider<List<BarChartGroupData>>((ref) {
   return [
     BarChartGroupData(
       x: 0,
-      barRods: [BarChartRodData(toY: 85, color: Colors.blue, width: 20)],
+      barRods: [BarChartRodData(toY: 85, color: Colors.blueAccent, width: 18)],
     ),
     BarChartGroupData(
       x: 1,
-      barRods: [BarChartRodData(toY: 78, color: Colors.green, width: 20)],
+      barRods: [BarChartRodData(toY: 78, color: Colors.greenAccent, width: 18)],
     ),
     BarChartGroupData(
       x: 2,
-      barRods: [BarChartRodData(toY: 72, color: Colors.orange, width: 20)],
+      barRods: [
+        BarChartRodData(toY: 72, color: Colors.orangeAccent, width: 18),
+      ],
     ),
     BarChartGroupData(
       x: 3,
-      barRods: [BarChartRodData(toY: 65, color: Colors.red, width: 20)],
+      barRods: [BarChartRodData(toY: 65, color: Colors.redAccent, width: 18)],
     ),
     BarChartGroupData(
       x: 4,
-      barRods: [BarChartRodData(toY: 58, color: Colors.purple, width: 20)],
+      barRods: [
+        BarChartRodData(toY: 58, color: Colors.purpleAccent, width: 18),
+      ],
     ),
   ];
 });
 
-// Provider for line chart data
 final lineChartDataProvider = Provider<List<FlSpot>>((ref) {
   return const [
     FlSpot(0, 20),
@@ -137,6 +99,8 @@ final lineChartDataProvider = Provider<List<FlSpot>>((ref) {
   ];
 });
 
+// --- UI Implementation ---
+
 class LeaderboardPage extends ConsumerWidget {
   const LeaderboardPage({Key? key}) : super(key: key);
 
@@ -145,58 +109,126 @@ class LeaderboardPage extends ConsumerWidget {
     final placements = ref.watch(placementsDataProvider);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text(
           'Placement Leaderboard',
-          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+          ),
         ),
-        backgroundColor: Colors.white,
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black87),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xff4A148C), Color(0xff6A1B9A), Color(0xff8E24AA)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
+      body: Stack(
+        children: [
+          // Background Gradient
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xff3E1E68),
+                  Color(0xff2B1055),
+                  Color(0xff120A2A),
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+          ),
+
+          // Foreground Content
+          SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 100, 16, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _glassCard(
+                  title: 'Placement Statistics 2024',
+                  child: SizedBox(height: 200, child: _buildBarChart(ref)),
+                ),
+                const SizedBox(height: 22),
+                _glassCard(
+                  title: 'Branch-wise Placements',
+                  child: SizedBox(height: 200, child: _buildLineChart(ref)),
+                ),
+                const SizedBox(height: 30),
+
+                const Text(
+                  'Top Placements',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                SizedBox(
+                  height: 250,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: placements.length,
+                    itemBuilder: (context, index) {
+                      return _placementCard(index + 1, placements[index]);
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- Reusable Glass Card Container ---
+  Widget _glassCard({required String title, required Widget child}) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withOpacity(0.2)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 12,
+                offset: const Offset(2, 6),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // First Graph - Placement Statistics
-              _buildGraphCard(
-                title: 'Placement Statistics 2024',
-                graph: _buildBarChart(ref),
-              ),
-              const SizedBox(height: 24),
-
-              // Second Graph - Branch-wise Placements
-              _buildGraphCard(
-                title: 'Branch-wise Placements',
-                graph: _buildLineChart(ref),
-              ),
-              const SizedBox(height: 24),
-
-              // Top Placements Title
-              const Text(
-                'Top Placements',
-                style: TextStyle(
-                  fontSize: 22,
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  color: Colors.white,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  letterSpacing: 0.6,
                 ),
               ),
-              const SizedBox(height: 16),
-
-              // Horizontal Scrollable Cards
-              SizedBox(
-                height: 240,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: placements.length,
-                  itemBuilder: (context, index) {
-                    return _buildPlacementCard(index + 1, placements[index]);
-                  },
-                ),
-              ),
+              const SizedBox(height: 14),
+              child,
             ],
           ),
         ),
@@ -204,47 +236,15 @@ class LeaderboardPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildGraphCard({required String title, required Widget graph}) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 2,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(height: 200, child: graph),
-        ],
-      ),
-    );
-  }
-
+  // --- Charts ---
   Widget _buildBarChart(WidgetRef ref) {
     final barGroups = ref.watch(barChartDataProvider);
-
     return BarChart(
       BarChartData(
         alignment: BarChartAlignment.spaceAround,
         maxY: 100,
         barTouchData: BarTouchData(enabled: false),
+        gridData: const FlGridData(show: true, drawHorizontalLine: true),
         titlesData: FlTitlesData(
           show: true,
           bottomTitles: AxisTitles(
@@ -252,13 +252,10 @@ class LeaderboardPage extends ConsumerWidget {
               showTitles: true,
               getTitlesWidget: (value, meta) {
                 const titles = ['CS', 'IT', 'ECE', 'ME', 'CE'];
-                if (value.toInt() >= 0 && value.toInt() < titles.length) {
-                  return Text(
-                    titles[value.toInt()],
-                    style: const TextStyle(fontSize: 12),
-                  );
-                }
-                return const Text('');
+                return Text(
+                  titles[value.toInt()],
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                );
               },
             ),
           ),
@@ -266,12 +263,10 @@ class LeaderboardPage extends ConsumerWidget {
             sideTitles: SideTitles(
               showTitles: true,
               reservedSize: 40,
-              getTitlesWidget: (value, meta) {
-                return Text(
-                  value.toInt().toString(),
-                  style: const TextStyle(fontSize: 10),
-                );
-              },
+              getTitlesWidget: (value, meta) => Text(
+                value.toInt().toString(),
+                style: const TextStyle(color: Colors.white54, fontSize: 10),
+              ),
             ),
           ),
           topTitles: const AxisTitles(
@@ -289,37 +284,31 @@ class LeaderboardPage extends ConsumerWidget {
 
   Widget _buildLineChart(WidgetRef ref) {
     final spots = ref.watch(lineChartDataProvider);
-
     return LineChart(
       LineChartData(
-        gridData: const FlGridData(show: true),
+        gridData: const FlGridData(show: true, drawVerticalLine: false),
         titlesData: FlTitlesData(
           show: true,
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
               getTitlesWidget: (value, meta) {
-                const titles = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-                if (value.toInt() >= 0 && value.toInt() < titles.length) {
-                  return Text(
-                    titles[value.toInt()],
-                    style: const TextStyle(fontSize: 12),
-                  );
-                }
-                return const Text('');
+                const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+                return Text(
+                  labels[value.toInt()],
+                  style: const TextStyle(color: Colors.white70, fontSize: 11),
+                );
               },
             ),
           ),
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
+              getTitlesWidget: (v, m) => Text(
+                v.toInt().toString(),
+                style: const TextStyle(color: Colors.white54, fontSize: 10),
+              ),
               reservedSize: 40,
-              getTitlesWidget: (value, meta) {
-                return Text(
-                  value.toInt().toString(),
-                  style: const TextStyle(fontSize: 10),
-                );
-              },
             ),
           ),
           topTitles: const AxisTitles(
@@ -329,17 +318,16 @@ class LeaderboardPage extends ConsumerWidget {
             sideTitles: SideTitles(showTitles: false),
           ),
         ),
-        borderData: FlBorderData(show: true),
         lineBarsData: [
           LineChartBarData(
             spots: spots,
             isCurved: true,
-            color: Colors.blue,
+            color: Colors.cyanAccent,
             barWidth: 3,
             dotData: const FlDotData(show: true),
             belowBarData: BarAreaData(
               show: true,
-              color: Colors.blue.withOpacity(0.1),
+              color: Colors.cyanAccent.withOpacity(0.2),
             ),
           ),
         ],
@@ -347,223 +335,140 @@ class LeaderboardPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildPlacementCard(int rank, Map<String, String> data) {
+  // --- Placement Card ---
+  Widget _placementCard(int rank, Map<String, String> data) {
     return Container(
-      width: 300,
+      width: 290,
       margin: const EdgeInsets.only(right: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
-            spreadRadius: 2,
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.white.withOpacity(0.2)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 10,
+                  offset: const Offset(2, 4),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.all(16),
+            child: Stack(
               children: [
-                Row(
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Person's Image
-                    Container(
-                      width: 70,
-                      height: 70,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.grey.shade300,
-                          width: 2,
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 35,
+                          backgroundColor: Colors.white24,
+                          backgroundImage: AssetImage(data['image']!),
+                          onBackgroundImageError: (_, __) {},
                         ),
-                      ),
-                      child: ClipOval(
-                        child: Image.asset(
-                          data['image']!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            // Fallback to gradient with initial if image not found
-                            return Container(
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Colors.primaries[rank %
-                                        Colors.primaries.length],
-                                    Colors.primaries[(rank + 3) %
-                                        Colors.primaries.length],
-                                  ],
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                data['name']!,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                data['branch']!,
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 13,
                                 ),
                               ),
-                              child: Center(
-                                child: Text(
-                                  data['name']![0],
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 32,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
+                            ],
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                    const SizedBox(width: 16),
-
-                    // Person's Details
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            data['name']!,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.business,
+                          color: Colors.cyanAccent,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          data['company']!,
+                          style: const TextStyle(
+                            color: Colors.cyanAccent,
+                            fontWeight: FontWeight.w600,
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            data['branch']!,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey[600],
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.currency_rupee,
+                          color: Colors.greenAccent,
+                          size: 18,
+                        ),
+                        Text(
+                          data['package']!,
+                          style: const TextStyle(
+                            color: Colors.greenAccent,
+                            fontWeight: FontWeight.bold,
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-
-                // Company Tag
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.business, size: 16, color: Colors.blue[700]),
-                      const SizedBox(width: 6),
-                      Flexible(
-                        child: Text(
-                          data['company']!,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.blue[700],
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Package Section
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Colors.green.shade50, Colors.green.shade100],
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
                     ),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.currency_rupee,
-                        size: 18,
-                        color: Colors.green[800],
+                    decoration: BoxDecoration(
+                      color: _getRankColor(rank),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '#$rank',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Package: ',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.green[800],
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      Text(
-                        data['package']!,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green[900],
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-
-          // Rank Badge
-          Positioned(
-            top: 8,
-            right: 8,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: _getRankColor(rank),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: _getRankColor(rank).withOpacity(0.3),
-                    spreadRadius: 1,
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Text(
-                '#$rank',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                ),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 
   Color _getRankColor(int rank) {
-    if (rank == 1) return Colors.amber.shade600;
-    if (rank == 2) return Colors.grey[400]!;
-    if (rank == 3) return Colors.brown[400]!;
-    return Colors.blue;
+    if (rank == 1) return Colors.amberAccent.shade700;
+    if (rank == 2) return Colors.grey.shade400;
+    if (rank == 3) return Colors.brown.shade400;
+    return Colors.blueAccent;
   }
 }
