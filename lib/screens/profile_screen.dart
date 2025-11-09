@@ -17,24 +17,10 @@ final userPostsProvider = FutureProvider<List<dynamic>>((ref) async {
   return posts;
 });
 
-final commentedPostsProvider = FutureProvider<List<dynamic>>((ref) async {
-  print('📥 commentedPostsProvider called');
-  final posts = await PostService.getCommentedPosts();
-  print('✅ commentedPostsProvider returned ${posts.length} posts');
-  return posts;
-});
-
 final likedPostsProvider = FutureProvider<List<dynamic>>((ref) async {
   print('📥 likedPostsProvider called');
   final posts = await PostService.getLikedPosts();
   print('✅ likedPostsProvider returned ${posts.length} posts');
-  return posts;
-});
-
-final dislikedPostsProvider = FutureProvider<List<dynamic>>((ref) async {
-  print('📥 dislikedPostsProvider called');
-  final posts = await PostService.getDislikedPosts();
-  print('✅ dislikedPostsProvider returned ${posts.length} posts');
   return posts;
 });
 
@@ -206,9 +192,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget build(BuildContext context) {
     final token = ref.watch(authTokenProvider);
     final userPostsAsync = ref.watch(userPostsProvider);
-    final commentedPostsAsync = ref.watch(commentedPostsProvider);
     final likedPostsAsync = ref.watch(likedPostsProvider);
-    final dislikedPostsAsync = ref.watch(dislikedPostsProvider);
 
     if (token == null || token.isEmpty) {
       return Scaffold(
@@ -395,9 +379,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             await _loadUserProfile();
             await _loadUserLocation();
             ref.refresh(userPostsProvider);
-            ref.refresh(commentedPostsProvider);
+
             ref.refresh(likedPostsProvider);
-            ref.refresh(dislikedPostsProvider);
+
           },
           child: ScrollConfiguration(
             behavior: const ScrollBehavior().copyWith(overscroll: false),
@@ -774,91 +758,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ],
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Divider(thickness: 2),
-                        const SizedBox(height: 16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(Icons.comment,
-                                    color: Colors.orange.shade700, size: 20),
-                                const SizedBox(width: 8),
-                                const Text(
-                                  'Commented Posts',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            commentedPostsAsync.when(
-                              data: (posts) => Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.8),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  '${posts.length}',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.orange.shade800,
-                                  ),
-                                ),
-                              ),
-                              loading: () => const SizedBox.shrink(),
-                              error: (_, __) => const SizedBox.shrink(),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        commentedPostsAsync.when(
-                          data: (posts) {
-                            if (posts.isEmpty) {
-                              return Center(
-                                child: Column(
-                                  children: [
-                                    Icon(Icons.comment_outlined,
-                                        size: 64, color: Colors.grey[400]),
-                                    const SizedBox(height: 12),
-                                    Text(
-                                      'No commented posts yet',
-                                      style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.grey[600]),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            }
-
-                            return ListView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: posts.length,
-                              itemBuilder: (context, index) =>
-                                  _PostCardSimple(post: posts[index]),
-                            );
-                          },
-                          loading: () =>
-                              const Center(child: CircularProgressIndicator()),
-                          error: (error, _) => Center(
-                            child: Text('Error: $error'),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+  
 
                   Padding(
                     padding: const EdgeInsets.all(16),
@@ -867,24 +767,35 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       children: [
                         const Divider(thickness: 2),
                         const SizedBox(height: 16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(Icons.favorite,
-                                    color: Colors.red.shade700, size: 20),
-                                const SizedBox(width: 8),
-                                const Text(
-                                  'Liked Posts',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                              ],
-                            ),
+                       Row(
+  mainAxisAlignment: MainAxisAlignment.spaceBetween,  // ✅ This pushes items to edges
+  children: [
+    // Left side - Liked Posts text
+    Row(
+      children: [
+        Icon(Icons.favorite, color: Colors.red.shade700, size: 20),
+        const SizedBox(width: 8),
+        const Text(
+          'Liked Posts',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+      ],
+    ),
+    
+    // Right side - Refresh button
+    IconButton(
+      icon: const Icon(Icons.refresh, size: 20, color: Colors.black54),
+      onPressed: () {
+        ref.invalidate(likedPostsProvider);
+      },
+      tooltip: 'Refresh liked posts',
+    ),
+
+
                             likedPostsAsync.when(
                               data: (posts) => Container(
                                 padding: const EdgeInsets.symmetric(
@@ -944,94 +855,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         ),
                       ],
                     ),
-                  ),
-
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Divider(thickness: 2),
-                        const SizedBox(height: 16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(Icons.thumb_down,
-                                    color: Colors.orange.shade700, size: 20),
-                                const SizedBox(width: 8),
-                                const Text(
-                                  'Disliked Posts',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            dislikedPostsAsync.when(
-                              data: (posts) => Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.8),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  '${posts.length}',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.orange.shade800,
-                                  ),
-                                ),
-                              ),
-                              loading: () => const SizedBox.shrink(),
-                              error: (_, __) => const SizedBox.shrink(),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        dislikedPostsAsync.when(
-                          data: (posts) {
-                            if (posts.isEmpty) {
-                              return Center(
-                                child: Column(
-                                  children: [
-                                    Icon(Icons.thumb_down_outlined,
-                                        size: 64, color: Colors.grey[400]),
-                                    const SizedBox(height: 12),
-                                    Text(
-                                      'No disliked posts yet',
-                                      style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.grey[600]),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            }
-
-                            return ListView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: posts.length,
-                              itemBuilder: (context, index) =>
-                                  _PostCardSimple(post: posts[index]),
-                            );
-                          },
-                          loading: () =>
-                              const Center(child: CircularProgressIndicator()),
-                          error: (error, _) => Center(
-                            child: Text('Error: $error'),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
+                  ),                
                   const SizedBox(height: 24),
                 ],
               ),

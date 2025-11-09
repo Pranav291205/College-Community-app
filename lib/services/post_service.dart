@@ -1,7 +1,9 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:http_parser/http_parser.dart';
 import 'dart:io';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 
 const String apiUrl = 'https://college-community-app-backend.onrender.com';
 const storage = FlutterSecureStorage();
@@ -87,65 +89,114 @@ class PostService {
   }
 
   static Future<Map<String, dynamic>> createPost({
-    required String title,
-    required String description,
-    required String category,
-    File? mediaFile,
-  }) async {
-    try {
-      print('🚀 Creating post...');
+  required String title,
+  required String description,
+  required String category,
+  File? mediaFile,
+}) async {
+  try {
+    // ✅ ADD THESE DEBUG PRINTS
+    print('🚀 Creating post...');
+    print('📤 Title: $title');
+    print('📤 Description: $description');
+    print('📤 Category: $category');
+    print('📤 Media: ${mediaFile?.path ?? "none"}');
 
-      var request = http.MultipartRequest(
-        'POST',
-        Uri.parse('$apiUrl/api/posts/create'),
-      );
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$apiUrl/api/posts/create'),
+    );
 
-      if (_authToken != null && _authToken!.isNotEmpty) {
-        request.headers['Authorization'] = 'Bearer $_authToken';
-      }
-
-      request.headers['Accept'] = 'application/json';
-      request.fields['title'] = title;
-      request.fields['description'] = description;
-      request.fields['category'] = category;
-
-      if (mediaFile != null) {
-        int fileSize = await mediaFile.length();
-        double fileSizeMB = fileSize / (1024 * 1024);
-        if (fileSizeMB > 10) {
-          return {'success': false, 'message': 'File too large (max 10MB)'};
-        }
-        String fileName = mediaFile.path.split('/').last;
-        request.files.add(
-          await http.MultipartFile.fromPath('media', mediaFile.path,
-              filename: fileName),
-        );
-      }
-
-      var streamedResponse =
-          await request.send().timeout(const Duration(seconds: 60));
-      var response = await http.Response.fromStream(streamedResponse);
-
-      print('📊 Status: ${response.statusCode}');
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        print('✅ Post created successfully');
-        return {
-          'success': true,
-          'message': 'Post created!',
-          'data': jsonDecode(response.body),
-        };
-      } else {
-        return {
-          'success': false,
-          'message': 'Error: ${response.statusCode}',
-        };
-      }
-    } catch (e) {
-      print('❌ Error: $e');
-      return {'success': false, 'message': 'Error: $e'};
+    if (_authToken != null && _authToken!.isNotEmpty) {
+      request.headers['Authorization'] = 'Bearer $_authToken';
+      // ✅ ADD THIS DEBUG PRINT
+      print('📤 Token: ${_authToken!.substring(0, 20)}...');
     }
+
+    request.headers['Accept'] = 'application/json';
+    request.fields['title'] = title;
+    request.fields['description'] = description;
+    request.fields['category'] = category;
+
+    // ✅ ADD THIS DEBUG PRINT
+    print('📤 All fields: ${request.fields}');
+
+    if (mediaFile != null) {
+  int fileSize = await mediaFile.length();
+  double fileSizeMB = fileSize / (1024 * 1024);
+  
+  print('📤 File size: ${fileSizeMB.toStringAsFixed(2)} MB');
+  
+  if (fileSizeMB > 10) {
+    return {'success': false, 'message': 'File too large (max 10MB)'};
   }
+  
+  String fileName = mediaFile.path.split('/').last;
+  String extension = fileName.split('.').last.toLowerCase();
+  
+  // ✅ Determine correct MIME type
+  String contentType;
+  if (extension == 'jpg' || extension == 'jpeg') {
+    contentType = 'image/jpeg';
+  } else if (extension == 'png') {
+    contentType = 'image/png';
+  } else if (extension == 'gif') {
+    contentType = 'image/gif';
+  } else if (extension == 'webp') {
+    contentType = 'image/webp';
+  } else if (extension == 'mp4') {
+    contentType = 'video/mp4';
+  } else if (extension == 'mov') {
+    contentType = 'video/quicktime';
+  } else {
+    contentType = 'application/octet-stream';
+  }
+  
+  print('📤 File: $fileName');
+  print('📤 Content-Type: $contentType');
+  
+  // ✅ Add file with proper content type
+  request.files.add(
+    await http.MultipartFile.fromPath(
+      'media',
+      mediaFile.path,
+      filename: fileName,
+      contentType: MediaType.parse(contentType),  // ✅ This is critical!
+    ),
+  );
+}
+
+
+    var streamedResponse =
+        await request.send().timeout(const Duration(seconds: 60));
+    var response = await http.Response.fromStream(streamedResponse);
+
+    print('📊 Status: ${response.statusCode}');
+    
+    // ✅ ADD THIS DEBUG PRINT
+    print('📥 Response body: ${response.body}');
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      print('✅ Post created successfully');
+      return {
+        'success': true,
+        'message': 'Post created!',
+        'data': jsonDecode(response.body),
+      };
+    } else {
+      // ✅ ADD THIS DEBUG PRINT
+      print('❌ Error response: ${response.body}');
+      return {
+        'success': false,
+        'message': 'Error: ${response.statusCode}',
+      };
+    }
+  } catch (e) {
+    print('❌ Error: $e');
+    return {'success': false, 'message': 'Error: $e'};
+  }
+}
+
 
   static Future<List<dynamic>> getAllPosts() async {
     try {
@@ -234,97 +285,69 @@ class PostService {
   }
 
   static Future<List<dynamic>> getUserPosts() async {
-    try {
-      final token = authToken;
-      if (token == null) {
-        print('❌ No token - getUserPosts');
-        return [];
-      }
-
-      print('📥 Fetching user posts...');
-
-      final endpoints = [
-        '$apiUrl/api/users/me/posts',
-        '$apiUrl/api/posts/me',
-        '$apiUrl/api/posts/user/me',
-        '$apiUrl/api/users/posts',
-        '$apiUrl/api/posts/user',
-      ];
-
-      for (String endpoint in endpoints) {
-        print('🔍 Trying: $endpoint');
-
-        try {
-          final response = await http.get(
-            Uri.parse(endpoint),
-            headers: {
-              'Authorization': 'Bearer $token',
-              'Accept': 'application/json',
-              'Content-Type': 'application/json',
-            },
-          ).timeout(const Duration(seconds: 30));
-
-          print('📊 Status: ${response.statusCode}');
-
-          if (response.statusCode == 200) {
-            final data = jsonDecode(response.body);
-            List<dynamic> userPosts = [];
-
-            if (data is List) {
-              userPosts = data;
-            } else if (data is Map) {
-              userPosts = data['posts'] ??
-                  data['userPosts'] ??
-                  data['data'] ??
-                  data['myPosts'] ??
-                  [];
-            }
-
-            print('✅ ${userPosts.length} user posts fetched from $endpoint');
-
-            for (int i = 0; i < userPosts.length; i++) {
-              if (userPosts[i] is Map) {
-                Map<String, dynamic> post =
-                    Map<String, dynamic>.from(userPosts[i]);
-
-                if (post['authorName'] == null ||
-                    (post['authorName'] is String &&
-                        post['authorName'].isEmpty)) {
-                  if (post['author'] is Map) {
-                    post['authorName'] = post['author']['name'] ??
-                        post['author']['userName'] ??
-                        post['author']['fullName'] ??
-                        'You';
-                  } else if (post['author'] is String &&
-                      post['author'].isNotEmpty) {
-                    post['authorName'] = post['author'];
-                  } else if (post['userName'] is String &&
-                      post['userName'].isNotEmpty) {
-                    post['authorName'] = post['userName'];
-                  } else {
-                    post['authorName'] = 'You';
-                  }
-                }
-
-                userPosts[i] = post;
-              }
-            }
-
-            return userPosts;
-          }
-        } catch (e) {
-          print('   ⚠️ Failed on $endpoint: $e');
-          continue;
-        }
-      }
-
-      print('❌ All endpoints failed for user posts');
-      return [];
-    } catch (e) {
-      print('❌ Error fetching user posts: $e');
+  try {
+    if (_authToken == null || _authToken!.isEmpty) {
+      print('❌ No token - getUserPosts');
       return [];
     }
+
+    print('🔥 📥 FETCHING USER POSTS FROM API...');
+    print('🔥 🔗 URL: $apiUrl/api/posts/mine');
+    print('🔥 🔑 Token: ${_authToken!.substring(0, 20)}...');
+
+    final response = await http.get(
+      Uri.parse('$apiUrl/api/posts/mine'),  // ✅ Correct endpoint from your API
+      headers: {
+        'Authorization': 'Bearer $_authToken',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    ).timeout(const Duration(seconds: 30));
+
+    print('🔥 📊 User Posts Status: ${response.statusCode}');
+    print('🔥 📥 Response Body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      
+      if (data['success'] == true) {
+        List<dynamic> posts = data['posts'] ?? [];
+        
+        print('🔥 ✅ ${posts.length} USER POSTS FOUND!');
+        
+        // Process each post to ensure proper structure
+        for (int i = 0; i < posts.length; i++) {
+          if (posts[i] is Map) {
+            Map<String, dynamic> post = Map<String, dynamic>.from(posts[i]);
+            
+            // Extract author name from user object
+            if (post['user'] is Map) {
+              post['authorName'] = post['user']['name'] ?? 'Anonymous';
+              post['authorEmail'] = post['user']['email'] ?? '';
+            } else if (post['authorName'] == null || post['authorName'] == '') {
+              post['authorName'] = 'Anonymous';
+            }
+            
+            posts[i] = post;
+          }
+        }
+        
+        return posts;
+      } else {
+        print('🔥 ❌ API returned success: false');
+        return [];
+      }
+    } else {
+      print('🔥 ❌ Failed with status: ${response.statusCode}');
+      return [];
+    }
+  } catch (e, stackTrace) {
+    print('🔥 ❌ ERROR fetching user posts: $e');
+    print('Stack trace: $stackTrace');
+    return [];
   }
+}
+
 
   static Future<Map<String, dynamic>> getUserEngagement() async {
     try {
@@ -390,37 +413,115 @@ class PostService {
   }
 
   static Future<List<dynamic>> getLikedPosts() async {
-    try {
-      final engagement = await getUserEngagement();
-      final likedPosts = engagement['likedPosts'] ?? [];
-
-      print('✅ ${likedPosts.length} liked posts fetched');
-
-      for (int i = 0; i < likedPosts.length; i++) {
-        if (likedPosts[i] is Map) {
-          Map<String, dynamic> post = Map<String, dynamic>.from(likedPosts[i]);
-
-          if (post['authorName'] == null ||
-              (post['authorName'] is String &&
-                  post['authorName'].isEmpty)) {
-            if (post['author'] is Map) {
-              post['authorName'] = post['author']['name'] ??
-                  post['author']['userName'] ??
-                  post['author']['fullName'] ??
-                  'Anonymous';
-            }
-          }
-
-          likedPosts[i] = post;
-        }
-      }
-
-      return likedPosts;
-    } catch (e) {
-      print('❌ Error fetching liked posts: $e');
+  try {
+    if (_authToken == null || _authToken!.isEmpty) {
+      print('❌ No token - getLikedPosts');
       return [];
     }
+
+    print('🔥 📥 FETCHING LIKED POSTS FROM API...');  // ✅ Very visible log
+    print('🔥 🔗 URL: $apiUrl/api/posts/liked');
+    print('🔥 🔑 Token: ${_authToken!.substring(0, 20)}...');
+
+    final response = await http.get(
+      Uri.parse('$apiUrl/api/posts/liked'),
+      headers: {
+        'Authorization': 'Bearer $_authToken',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    ).timeout(const Duration(seconds: 30));
+
+    print('🔥 📊 Liked Posts Status: ${response.statusCode}');
+    print('🔥 📥 Response Body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      
+      if (data['success'] == true) {
+        List<dynamic> likedPosts = data['likedPosts'] ?? [];
+        
+        print('🔥 ✅ ${likedPosts.length} LIKED POSTS FOUND!');
+        
+        // Process posts
+        for (int i = 0; i < likedPosts.length; i++) {
+          if (likedPosts[i] is Map) {
+            Map<String, dynamic> post = Map<String, dynamic>.from(likedPosts[i]);
+            
+            if (post['user'] is Map) {
+              post['authorName'] = post['user']['name'] ?? 'Anonymous';
+            } else if (post['authorName'] == null || post['authorName'] == '') {
+              post['authorName'] = 'Anonymous';
+            }
+            
+            likedPosts[i] = post;
+          }
+        }
+        
+        return likedPosts;
+      } else {
+        print('🔥 ❌ API returned success: false');
+        return [];
+      }
+    } else {
+      print('🔥 ❌ Failed with status: ${response.statusCode}');
+      return [];
+    }
+  } catch (e) {
+    print('🔥 ❌ ERROR fetching liked posts: $e');
+    return [];
   }
+}
+
+
+  static Future<Map<String, dynamic>> getComments({
+  required String postId,
+  int page = 1,
+  int limit = 10,
+}) async {
+  try {
+    final headers = {'Accept': 'application/json'};
+    if (_authToken != null) {
+      headers['Authorization'] = 'Bearer $_authToken';
+    }
+
+    print('📥 Fetching comments for post: $postId (page: $page, limit: $limit)');
+
+    final response = await http.get(
+      Uri.parse('$apiUrl/api/comments/$postId?page=$page&limit=$limit'),
+      headers: headers,
+    ).timeout(const Duration(seconds: 30));
+
+    print('📊 Comments Status: ${response.statusCode}');
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      print('✅ Comments fetched: ${data['totalComments']} total');
+      
+      return {
+        'success': true,
+        'totalComments': data['totalComments'] ?? 0,
+        'currentPage': data['currentPage'] ?? 1,
+        'totalPages': data['totalPages'] ?? 1,
+        'comments': data['comments'] ?? [],
+      };
+    }
+
+    return {
+      'success': false,
+      'totalComments': 0,
+      'comments': [],
+    };
+  } catch (e) {
+    print('❌ Error fetching comments: $e');
+    return {
+      'success': false,
+      'totalComments': 0,
+      'comments': [],
+    };
+  }
+}
+
 
   static Future<List<dynamic>> getCommentedPosts() async {
     try {
@@ -709,37 +810,60 @@ static Future<Map<String, dynamic>> getPostById(String postId) async {
 
 
   static Future<Map<String, dynamic>> addComment({
-    required String postId,
-    required String content,
-  }) async {
-    try {
-      if (_authToken == null || _authToken!.isEmpty) {
-        return {'success': false, 'message': 'Not authenticated'};
-      }
-
-      print('💬 Adding comment to post: $postId');
-
-      final response = await http.post(
-        Uri.parse('$apiUrl/api/posts/$postId/comment'),
-        headers: {
-          'Authorization': 'Bearer $_authToken',
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: jsonEncode({'content': content}),
-      ).timeout(const Duration(seconds: 30));
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        print('✅ Comment added');
-        return {'success': true, 'message': 'Comment added'};
-      } else {
-        return {'success': false, 'message': 'Error: ${response.statusCode}'};
-      }
-    } catch (e) {
-      print('❌ Exception: $e');
-      return {'success': false, 'message': 'Error: $e'};
+  required String postId,
+  required String content,
+}) async {
+  try {
+    if (_authToken == null || _authToken!.isEmpty) {
+      return {'success': false, 'message': 'Not authenticated'};
     }
+
+    // ✅ Decode JWT to get user ID
+    Map<String, dynamic> decodedToken = JwtDecoder.decode(_authToken!);
+    String userId = decodedToken['userId'] ?? decodedToken['id'] ?? '';
+
+    print('💬 Adding comment to post: $postId');
+    print('👤 User ID: $userId');
+    print('📤 Content: $content');
+
+    final response = await http.post(
+      Uri.parse('$apiUrl/api/comments/add'),
+      headers: {
+        'Authorization': 'Bearer $_authToken',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode({
+        'postId': postId,
+        'user': userId,    // ✅ ADD THIS - user ID from token
+        'text': content,
+      }),
+    ).timeout(const Duration(seconds: 30));
+
+    print('📊 Response status: ${response.statusCode}');
+    print('📥 Response body: ${response.body}');
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      print('✅ Comment added successfully');
+      return {
+        'success': true,
+        'message': 'Comment added',
+        'data': jsonDecode(response.body),
+      };
+    } else {
+      print('❌ Failed with status: ${response.statusCode}');
+      return {
+        'success': false,
+        'message': 'Error: ${response.statusCode}',
+      };
+    }
+  } catch (e) {
+    print('❌ Exception: $e');
+    return {'success': false, 'message': 'Error: $e'};
   }
+}
+
+
 
   static Future<Map<String, dynamic>> deleteComment({
     required String postId,

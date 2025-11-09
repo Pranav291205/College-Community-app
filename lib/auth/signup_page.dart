@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:community_app/auth/login_page.dart';
 import 'package:community_app/navbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -121,7 +122,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
         
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const NavBarPage()),
+          MaterialPageRoute(builder: (context) => const LoginPage()),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
