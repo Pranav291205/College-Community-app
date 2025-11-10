@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:community_app/services/socket_service.dart';
 import 'package:http/http.dart' as http;
 
 class AuthService {
@@ -124,10 +125,13 @@ class AuthService {
   }
 
   static void logout() {
-    authToken = null;
-    print('👋 Logged out - Token cleared');
-  }
-
+  SocketService.disconnect();
+  
+  authToken = null;
+  
+  print('👋 Logged out - Token cleared');
+  print('🔌 WebSocket disconnected');
+}
   static String? getAuthToken() {
     return authToken;
   }

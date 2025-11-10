@@ -1,3 +1,4 @@
+import 'package:community_app/services/search_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
@@ -124,24 +125,30 @@ class ChatsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        elevation: 6,
-        backgroundColor: Colors.blue.shade600,
-        title: const Text(
-          'Chats',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
-            onPressed: () => ref.read(chatsProvider.notifier).loadChats(),
-            tooltip: 'Refresh chats',
-          ),
-        ],
-      ),
+  elevation: 6,
+  backgroundColor: Colors.blue.shade600,
+  title: const Text(
+    'Chats',
+    style: TextStyle(
+      fontSize: 24,
+      fontWeight: FontWeight.bold,
+      color: Colors.white,
+    ),
+  ),
+  actions: [
+    IconButton(
+      icon: const Icon(Icons.search, color: Colors.white),
+      onPressed: () => _showUserSearchDialog(context, ref),
+      tooltip: 'Search Users',
+    ),
+    IconButton(
+      icon: const Icon(Icons.refresh, color: Colors.white),
+      onPressed: () => ref.read(chatsProvider.notifier).loadChats(),
+      tooltip: 'Refresh chats',
+    ),
+  ],
+),
+
       body: chatsState.isLoading
           ? const Center(
               child: CircularProgressIndicator(color: Colors.blue),
@@ -319,5 +326,192 @@ class ChatsScreen extends ConsumerWidget {
         child: const Icon(Icons.refresh, color: Colors.white),
       ),
     );
+    
   }
+void _showUserSearchDialog(BuildContext context, WidgetRef ref) {
+  final searchController = TextEditingController();
+  
+  showDialog(
+    context: context,
+    builder: (dialogContext) => StatefulBuilder(
+      builder: (context, setState) {
+        return AlertDialog(
+          title: const Text('Search Users'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search by name or email',
+                  prefixIcon: const Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () async {
+                  final query = searchController.text.trim();
+                  
+                  if (query.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Please enter a search term'),
+                      ),
+                    );
+                    return;
+                  }
+
+                  Navigator.pop(dialogContext);
+                  
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (_) => const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+
+                  final result = await SearchService.searchUsers(query);
+                  final users = result['users'] ?? [];
+
+                  if (context.mounted) {
+                    Navigator.pop(context); 
+
+                    if (users.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('No users found'),
+                        ),
+                      );
+                      return;
+                    }
+
+                    _showUserSelectionDialog(context, ref, users);
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue.shade600,
+                ),
+                child: const Text('Search'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    ),
+  );
+}
+
+void _showUserSelectionDialog(
+  BuildContext context,
+  WidgetRef ref,
+  List<dynamic> users,
+) {
+  showDialog(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Select User'),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: ListView.builder(
+          shrinkWrap: true,
+          itemCount: users.length,
+          itemBuilder: (context, index) {
+            final user = users[index];
+            return ListTile(
+              leading: CircleAvatar(
+                backgroundColor: Colors.blue.shade400,
+                child: Text(
+                  (user['name'] ?? 'U')[0].toUpperCase(),
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
+              title: Text(user['name'] ?? 'Unknown'),
+              subtitle: Text(user['email'] ?? ''),
+              onTap: () async {
+  final otherUserId = user['_id'] ?? 
+                     user['id'] ?? 
+                     user['user_id'] ?? 
+                     '';
+  final otherUserName = user['name'] ?? 'User';
+
+  print('🔍 Selected user:');
+  print('   User ID: $otherUserId');
+  print('   User Name: $otherUserName');
+
+  if (otherUserId.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('❌ Invalid user ID'),
+        backgroundColor: Colors.red,
+      ),
+    );
+    return;
+  }
+
+  Navigator.pop(dialogContext);
+
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => const Center(
+      child: CircularProgressIndicator(),
+    ),
+  );
+                final result = await ChatService.getOrCreateDirectChat(
+                  otherUserId,
+                );
+
+                if (context.mounted) {
+                  Navigator.pop(context);
+
+                  if (result['success']) {
+                    final chat = result['chat'];
+                    final chatId = chat['_id'] ?? chat['id'];
+
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ChatDetailPage(
+                          chatId: chatId,
+                          chatName: otherUserName,
+                          groupId: '',
+                        ),
+                      ),
+                    );
+
+                    ref.read(chatsProvider.notifier).loadChats();
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('❌ ${result['message']}'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              },
+            );
+          },
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext),
+          child: const Text('Cancel'),
+        ),
+      ],
+    ),
+  );
+}
+
 }

@@ -511,13 +511,15 @@ class _ChatPageState extends ConsumerState<ChatPage>
                             ),
                             child: ListTile(
                               onTap: () {
+                                Navigator.pop(context);
+                                ref.read(userSearchProvider.notifier).clearSearch();
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                     builder: (_) => ChatDetailPage(
+                                      chatId: group.id,  
+                                      chatName: group.chatName,
                                       groupId: group.id,
-                                      chatId: '',
-                                      chatName: '',
                                     ),
                                   ),
                                 );

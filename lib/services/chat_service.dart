@@ -80,139 +80,159 @@ class ChatService {
     }
   }
   static Future<Map<String, dynamic>> fetchChats() async {
-    try {
-      final token = PostService.authToken;
+  try {
+    final token = PostService.authToken;
 
-      if (token == null || token.isEmpty) {
-        print('❌ No auth token');
-        return {
-          'success': false,
-          'message': 'Not authenticated',
-          'chats': [],
-        };
-      }
-
-      print('📥 Fetching all chats...');
-
-      final response = await http.get(
-        Uri.parse('$chatApiUrl/api/chat'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      ).timeout(const Duration(seconds: 30));
-
-      print('📊 Status: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        List<dynamic> chats = [];
-
-        if (data is List) {
-          chats = data;
-        } else if (data is Map) {
-          final map = Map<String, dynamic>.from(data);
-          if (map['chats'] is List) {
-            chats = map['chats'];
-          } else if (map['data'] is List) {
-            chats = map['data'];
-          } else if (map['results'] is List) {
-            chats = map['results'];
-          }
-        }
-
-        print('✅ ${chats.length} raw chats fetched');
-
-        List<Map<String, dynamic>> processedChats = [];
-        for (var chat in chats) {
-          if (chat is Map) {
-            Map<String, dynamic> chatData = Map<String, dynamic>.from(chat);
-            final chatId = chatData['_id'] ??
-                chatData['id'] ??
-                chatData['chatId'] ??
-                '';
-
-            if (chatId.isEmpty) {
-              print('⚠️ WARNING: Chat has no ID, skipping');
-              print('   Available fields: ${chatData.keys.toList()}');
-              continue;
-            }
-
-            final chatName = chatData['chatName'] ??
-                chatData['name'] ??
-                'Chat';
-            final isGroupChat = chatData['isGroupChat'] ?? false;
-            final users = chatData['users'] ?? [];
-            final groupAdmin = chatData['groupAdmin'] ?? '';
-            final latestMessage = chatData['latestMessage'];
-
-            String lastMessageText = '';
-            String lastMessageTime = '';
-
-            if (latestMessage is Map) {
-              lastMessageText = latestMessage['content'] ?? '';
-              final sender = latestMessage['sender'];
-              if (sender is Map) {
-                lastMessageText = '${sender['name'] ?? "User"}: $lastMessageText';
-              }
-
-              if (latestMessage['createdAt'] != null) {
-                lastMessageTime = _formatMessageTime(latestMessage['createdAt']);
-              }
-            }
-
-            print('   📌 Chat: $chatName');
-            print('      ID: $chatId');
-            print('      Type: ${isGroupChat ? "Group" : "1-to-1"}');
-            print('      Users: ${users.length}');
-
-            processedChats.add({
-              'id': chatId, 
-              'chatName': chatName,
-              'isGroupChat': isGroupChat,
-              'users': users,
-              'groupAdmin': groupAdmin,
-              'latestMessage': lastMessageText,
-              'latestMessageTime': lastMessageTime,
-              'lastMessageSender': latestMessage?['sender']?['_id'] ?? '',
-              'updatedAt': chatData['updatedAt'] ?? '',
-              'createdAt': chatData['createdAt'] ?? '',
-              'rawChat': chatData,
-            });
-          }
-        }
-
-        print('✅ ${processedChats.length} valid chats processed');
-
-        return {
-          'success': true,
-          'message': 'Chats fetched successfully',
-          'chats': processedChats,
-          'count': processedChats.length,
-        };
-      } else if (response.statusCode == 401) {
-        return {
-          'success': false,
-          'message': 'Unauthorized - Token expired',
-          'chats': [],
-        };
-      } else {
-        return {
-          'success': false,
-          'message': 'Error: ${response.statusCode}',
-          'chats': [],
-        };
-      }
-    } catch (e) {
-      print('❌ Error: $e');
+    if (token == null || token.isEmpty) {
+      print('❌ No auth token');
       return {
         'success': false,
-        'message': 'Error: $e',
+        'message': 'Not authenticated',
         'chats': [],
       };
     }
+
+    print('📥 Fetching all chats...');
+
+    final response = await http.get(
+      Uri.parse('$chatApiUrl/api/chat'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    ).timeout(const Duration(seconds: 30));
+
+    print('📊 Status: ${response.statusCode}');
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      List<dynamic> chats = [];
+
+      if (data is List) {
+        chats = data;
+      } else if (data is Map) {
+        final map = Map<String, dynamic>.from(data);
+        if (map['chats'] is List) {
+          chats = map['chats'];
+        } else if (map['data'] is List) {
+          chats = map['data'];
+        }
+      }
+
+      print('✅ ${chats.length} raw chats fetched');
+
+      String? currentUserId;
+      try {
+        Map<String, dynamic> decoded = JwtDecoder.decode(token);
+        currentUserId = decoded['userId'] ?? decoded['id'] ?? decoded['_id'];
+      } catch (e) {
+        print('⚠️ Could not decode token: $e');
+      }
+
+      List<Map<String, dynamic>> processedChats = [];
+      for (var chat in chats) {
+        if (chat is Map) {
+          Map<String, dynamic> chatData = Map<String, dynamic>.from(chat);
+          final chatId = chatData['_id'] ?? chatData['id'] ?? '';
+
+          if (chatId.isEmpty) {
+            print('⚠️ WARNING: Chat has no ID, skipping');
+            continue;
+          }
+
+          var chatName = chatData['chatName'] ?? chatData['name'] ?? 'Chat';
+          final isGroupChat = chatData['isGroupChat'] ?? false;
+          final users = chatData['users'] ?? [];
+
+           String? currentUserId;
+           try {
+            Map<String, dynamic> decoded = JwtDecoder.decode(token);
+            currentUserId = decoded['userId'] ?? decoded['id'] ?? decoded['_id'];
+            } catch (e) {
+            print('⚠️ Could not decode token: $e');
+            }
+
+          if (!isGroupChat && users.length == 2 && currentUserId != null) {
+            for (var user in users) {
+              if (user is Map) {
+                final userId = user['_id'] ?? user['id'];
+                if (userId != currentUserId) {
+                  chatName = user['name'] ?? chatName;
+                  print('📝 Direct chat renamed to: $chatName');
+                  break;
+                }
+              }
+            }
+          }
+
+          final latestMessage = chatData['latestMessage'];
+          String lastMessageText = '';
+          String lastMessageTime = '';
+
+          if (latestMessage is Map) {
+            lastMessageText = latestMessage['content'] ?? '';
+            final sender = latestMessage['sender'];
+            if (sender is Map) {
+              lastMessageText = '${sender['name'] ?? "User"}: $lastMessageText';
+            }
+
+            if (latestMessage['createdAt'] != null) {
+              lastMessageTime = _formatMessageTime(latestMessage['createdAt']);
+            }
+          }
+
+          print('   📌 Chat: $chatName');
+          print('      ID: $chatId');
+          print('      Type: ${isGroupChat ? "Group" : "1-to-1"}');
+
+          processedChats.add({
+            'id': chatId,
+            'chatName': chatName,  
+            'isGroupChat': isGroupChat,
+            'users': users,
+            'groupAdmin': chatData['groupAdmin'] ?? '',
+            'latestMessage': lastMessageText,
+            'latestMessageTime': lastMessageTime,
+            'lastMessageSender': latestMessage?['sender']?['_id'] ?? '',
+            'updatedAt': chatData['updatedAt'] ?? '',
+            'createdAt': chatData['createdAt'] ?? '',
+            'rawChat': chatData,
+          });
+        }
+      }
+
+      print('✅ ${processedChats.length} valid chats processed');
+
+      return {
+        'success': true,
+        'message': 'Chats fetched successfully',
+        'chats': processedChats,
+        'count': processedChats.length,
+      };
+    } else if (response.statusCode == 401) {
+      return {
+        'success': false,
+        'message': 'Unauthorized - Token expired',
+        'chats': [],
+      };
+    } else {
+      return {
+        'success': false,
+        'message': 'Error: ${response.statusCode}',
+        'chats': [],
+      };
+    }
+  } catch (e) {
+    print('❌ Error: $e');
+    return {
+      'success': false,
+      'message': 'Error: $e',
+      'chats': [],
+    };
   }
+}
+
 
   static Future<Map<String, dynamic>> sendMessage({
     required String chatId,

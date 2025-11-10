@@ -1,4 +1,8 @@
 import 'dart:async';
+import 'package:community_app/navbar.dart';
+import 'package:community_app/providers/auth_notifier.dart';
+import 'package:community_app/services/post_service.dart';
+import 'package:community_app/services/socket_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
@@ -55,21 +59,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     )..forward();
 
     ref.read(typewriterTextProvider.notifier).startTyping();
-
-    Timer(const Duration(seconds: 5), () {
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          PageRouteBuilder(
-            transitionDuration: const Duration(milliseconds: 800),
-            pageBuilder: (_, __, ___) => const LoginPage(),
-            transitionsBuilder: (_, animation, __, child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
-          ),
-        );
-      }
-    });
-  }
+    _checkAuthAndNavigate();
+}
 
   @override
   void dispose() {
@@ -128,4 +119,39 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       ),
     );
   }
+  Future<void> _checkAuthAndNavigate() async {
+  await PostService.loadToken();
+  if (PostService.authToken != null && PostService.authToken!.isNotEmpty) {
+    ref.read(authTokenProvider.notifier).setToken(PostService.authToken!);
+    print('✅ Riverpod provider updated with loaded token');
+  }
+
+  await Future.delayed(const Duration(seconds: 5));
+
+  if (!mounted) return;
+
+  if (PostService.authToken != null && PostService.authToken!.isNotEmpty) {
+    print('✅ User is already logged in');
+    await SocketService.connect();
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 800),
+        pageBuilder: (_, __, ___) => const NavBarPage(),
+        transitionsBuilder: (_, animation, __, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+      ),
+    );
+  } else {
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 800),
+        pageBuilder: (_, __, ___) => const LoginPage(),
+        transitionsBuilder: (_, animation, __, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+      ),
+    );
+  }
+}
 }

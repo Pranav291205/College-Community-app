@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:community_app/auth/signup_page.dart';
 import 'package:community_app/navbar.dart';
+import 'package:community_app/services/socket_service.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,84 +25,94 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   bool _isPasswordVisible = false;
   bool _isLoading = false;
 
-  Future<void> _login() async {
-    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter email and password')),
-      );
-      return;
-    }
+Future<void> _login() async {
+  if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Enter email and password')),
+    );
+    return;
+  }
 
-    setState(() => _isLoading = true);
+  setState(() => _isLoading = true);
 
-    try {
-      print('🔐 Attempting login...');
-      print('   Email: ${_emailController.text}');
+  try {
+    print('🔐 Attempting login...');
+    print('   Email: ${_emailController.text}');
 
-      final response = await http.post(
-        Uri.parse('https://college-community-app-backend.onrender.com/api/users/login'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: jsonEncode({
-          'email': _emailController.text.trim(),
-          'password': _passwordController.text,
-        }),
-      );
+    final response = await http.post(
+      Uri.parse('https://college-community-app-backend.onrender.com/api/users/login'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode({
+        'email': _emailController.text.trim(),
+        'password': _passwordController.text,
+      }),
+    );
 
-      print('📊 Login Status: ${response.statusCode}');
-      print('📥 Response: ${response.body}');
+    print('📊 Login Status: ${response.statusCode}');
+    print('📥 Response: ${response.body}');
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final token = data['token'];
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final token = data['token'];
 
-        print('✅ Login successful');
-        print('   Token: ${token?.substring(0, 30) ?? "null"}...');
+      print('✅ Login successful');
+      print('   Token: ${token?.substring(0, 30) ?? "null"}...');
 
-        if (token != null && token.isNotEmpty) {
-          PostService.setAuthToken(token);
-          ref.read(authTokenProvider.notifier).setToken(token);
+      if (token != null && token.isNotEmpty) {
+        PostService.setAuthToken(token);
+        ref.read(authTokenProvider.notifier).setToken(token);
 
-          print('✅ Token set in both PostService and Riverpod');
+        print('✅ Token set in both PostService and Riverpod');
 
-          if (mounted) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const NavBarPage()),
-            );
-          }
-        } else {
-          print('❌ No token in response');
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Login failed: No token')),
-            );
-          }
+       
+        print('🔌 Connecting to WebSocket...');
+        try {
+          await SocketService.connect();
+          print('✅ WebSocket connected successfully');
+        } catch (e) {
+          print('⚠️ WebSocket connection failed: $e');
+        }
+
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const NavBarPage()),
+          );
         }
       } else {
-        final error = jsonDecode(response.body);
-        print('❌ Login error: ${error['message']}');
+        print('❌ No token in response');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Login failed: ${error['message'] ?? "Unknown error"}'),
-            ),
+            const SnackBar(content: Text('Login failed: No token')),
           );
         }
       }
-    } catch (e) {
-      print('❌ Exception: $e');
+    } else {
+      final error = jsonDecode(response.body);
+      print('❌ Login error: ${error['message']}');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+          SnackBar(
+            content: Text('Login failed: ${error['message'] ?? "Unknown error"}'),
+          ),
         );
       }
     }
-
-    setState(() => _isLoading = false);
+  } catch (e) {
+    print('❌ Exception: $e');
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
   }
+
+  setState(() => _isLoading = false);
+}
+
 
   void _skipLogin() {
     print('👤 Skipping login - entering as guest');

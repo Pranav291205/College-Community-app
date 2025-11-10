@@ -1,4 +1,5 @@
 import 'package:http/http.dart' as http;
+import 'package:http/http.dart' as _storage;
 import 'dart:convert';
 import 'package:http_parser/http_parser.dart';
 import 'dart:io';
@@ -43,15 +44,28 @@ class PostService {
     await storage.delete(key: 'auth_token');
   }
 
-  static void setAuthToken(String? token) {
-    if (token != null) {
-      saveToken(token);
+  static Future<void> setAuthToken(String token) async {
+    _authToken = token;
+    await storage.write(key: 'auth_token', value: token); 
+    print('✅ Token saved to secure storage');
+  }
+  static Future<void> loadToken() async {
+    _authToken = await storage.read(key: 'auth_token');
+    if (_authToken != null) {
+      print('✅ Token loaded from secure storage');
+      print('   Token: ${_authToken!.substring(0, 20)}...');
+    } else {
+      print('⚠️ No saved token found');
     }
   }
 
   static void clearAuthToken() {
     _authToken = null;
     storage.delete(key: 'auth_token');
+  }
+  static Future<void> logout() async {
+    await clearToken();
+    print('👋 Logged out - Token cleared from storage');
   }
 
   static String? getAuthToken() {

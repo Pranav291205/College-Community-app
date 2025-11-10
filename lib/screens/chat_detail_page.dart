@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import '../services/chat_service.dart';
+import '../services/socket_service.dart';
 
-final messagesProvider = StateNotifierProvider.family<MessagesNotifier, MessagesState, String>(
-  (ref, chatId) => MessagesNotifier(chatId),
-);
+final messagesProvider =
+    StateNotifierProvider.family<MessagesNotifier, MessagesState, String>(
+      (ref, chatId) => MessagesNotifier(chatId),
+    );
 
 class MessagesState {
   final List<dynamic> messages;
@@ -53,7 +55,6 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
       print('📊 Result:');
       print('   Success: ${result['success']}');
       print('   Count: ${result['count']}');
-      print('   Message: ${result['message']}');
 
       if (result['success']) {
         final messages = result['messages'] ?? [];
@@ -85,6 +86,11 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
     }
   }
 
+  void addMessage(dynamic message) {
+    state = state.copyWith(messages: [...state.messages, message]);
+    print('➕ Message added via WebSocket');
+  }
+
   Future<Map<String, dynamic>> sendMessage(String content) async {
     if (content.isEmpty) {
       return {'success': false, 'message': 'Message cannot be empty'};
@@ -103,9 +109,6 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
 
       if (result['success']) {
         print('✅ Message sent successfully');
-        print('   Message ID: ${result['messageId']}');
-
-        await loadMessages();
       } else {
         print('❌ Error: ${result['message']}');
       }
@@ -138,9 +141,47 @@ class ChatDetailPage extends ConsumerStatefulWidget {
 class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
+  bool _isOtherUserTyping = false;
+  @override
+  void initState() {
+    super.initState();
+    _initializeWebSocket();
+  }
+
+  void _initializeWebSocket() async {
+    if (!SocketService.isConnected) {
+      await SocketService.connect();
+    }
+
+    SocketService.joinRoom(widget.chatId);
+
+    SocketService.onNewMessage((data) {
+      print('📥 New message received: $data');
+
+      if (mounted) {
+        ref.read(messagesProvider(widget.chatId).notifier).addMessage(data);
+        _scrollToBottom();
+      }
+    });
+
+    SocketService.onUserTyping((data) {
+      print('⌨️ User typing: $data');
+
+      if (mounted) {
+        setState(() {
+          _isOtherUserTyping = data['isTyping'] ?? false;
+        });
+      }
+    });
+
+    SocketService.markAsRead(widget.chatId);
+  }
 
   @override
   void dispose() {
+    SocketService.leaveRoom(widget.chatId);
+    SocketService.removeAllListeners();
+
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -160,33 +201,13 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
       return;
     }
 
-    final result = await ref
-        .read(messagesProvider(widget.chatId).notifier)
-        .sendMessage(content);
+    SocketService.sendMessage(roomId: widget.chatId, message: content);
 
-    if (!mounted) return;
+    _messageController.clear();
 
-    if (result['success']) {
-      _messageController.clear();
+    SocketService.sendTypingStatus(widget.chatId, false);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('✅ Message sent'),
-          backgroundColor: Colors.green,
-          duration: Duration(milliseconds: 500),
-        ),
-      );
-
-      _scrollToBottom();
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('❌ ${result['message']}'),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
+    _scrollToBottom();
   }
 
   void _scrollToBottom() {
@@ -229,7 +250,11 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
         toolbarHeight: 70,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            SocketService.leaveRoom(widget.chatId);
+            SocketService.removeAllListeners();
+            Navigator.pop(context);
+          },
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -244,15 +269,28 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
             ),
             const SizedBox(height: 2),
             Text(
-              'Online',
+              _isOtherUserTyping ? 'typing...' : 'Online',
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.green[200],
+                color: _isOtherUserTyping
+                    ? Colors.yellow[200]
+                    : Colors.green[200],
+                fontStyle: _isOtherUserTyping
+                    ? FontStyle.italic
+                    : FontStyle.normal,
               ),
             ),
           ],
         ),
         actions: [
+          Icon(
+            SocketService.isConnected ? Icons.wifi : Icons.wifi_off,
+            color: SocketService.isConnected
+                ? Colors.green[200]
+                : Colors.red[200],
+            size: 20,
+          ),
+          const SizedBox(width: 8),
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.white),
             onPressed: () => ref
@@ -263,249 +301,243 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
         ],
       ),
       body: messagesState.isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Colors.blue),
-            )
+          ? const Center(child: CircularProgressIndicator(color: Colors.blue))
           : messagesState.errorMessage != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        size: 64,
-                        color: Colors.red[300],
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Error',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.red[600],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          messagesState.errorMessage ?? 'Unknown error',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.red[500],
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      ElevatedButton.icon(
-                        onPressed: () => ref
-                            .read(messagesProvider(widget.chatId).notifier)
-                            .loadMessages(),
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Retry'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue.shade600,
-                        ),
-                      ),
-                    ],
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Error',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red[600],
+                    ),
                   ),
-                )
-              : Column(
-                  children: [
-                    Expanded(
-                      child: messagesState.messages.isEmpty
-                          ? Center(
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      messagesState.errorMessage ?? 'Unknown error',
+                      style: TextStyle(fontSize: 14, color: Colors.red[500]),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: () => ref
+                        .read(messagesProvider(widget.chatId).notifier)
+                        .loadMessages(),
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue.shade600,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : Column(
+              children: [
+                Expanded(
+                  child: messagesState.messages.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.chat_bubble_outline,
+                                size: 64,
+                                color: Colors.grey[400],
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No messages yet',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Start the conversation',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey[500],
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          controller: _scrollController,
+                          reverse: true,
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 12,
+                            horizontal: 8,
+                          ),
+                          itemCount: messagesState.messages.length,
+                          itemBuilder: (context, index) {
+                            final message =
+                                messagesState.messages[messagesState
+                                        .messages
+                                        .length -
+                                    1 -
+                                    index];
+
+                            if (message is! Map) {
+                              return const SizedBox.shrink();
+                            }
+
+                            final Map<String, dynamic> msg =
+                                Map<String, dynamic>.from(message);
+
+                            final senderName =
+                                msg['sender']?['name'] ?? 'Unknown';
+                            final content = msg['content'] ?? '';
+                            final timestamp = msg['createdAt'];
+
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 6,
+                                horizontal: 8,
+                              ),
                               child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Icon(
-                                    Icons.chat_bubble_outline,
-                                    size: 64,
-                                    color: Colors.grey[400],
-                                  ),
-                                  const SizedBox(height: 16),
                                   Text(
-                                    'No messages yet',
+                                    senderName,
                                     style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.grey[600],
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.blue.shade700,
                                     ),
                                   ),
-                                  const SizedBox(height: 8),
+                                  const SizedBox(height: 4),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 10,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.blue.shade50,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: Colors.blue.shade200,
+                                        width: 1,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.blue.withOpacity(0.1),
+                                          blurRadius: 4,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Text(
+                                      content,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.black87,
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
                                   Text(
-                                    'Start the conversation',
+                                    _formatMessageTime(timestamp),
                                     style: TextStyle(
-                                      fontSize: 13,
+                                      fontSize: 11,
                                       color: Colors.grey[500],
                                     ),
                                   ),
                                 ],
                               ),
-                            )
-                          : ListView.builder(
-                              controller: _scrollController,
-                              reverse: true,
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 12,
-                                horizontal: 8,
+                            );
+                          },
+                        ),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border(top: BorderSide(color: Colors.grey[300]!)),
+                  ),
+                  child: SafeArea(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(color: Colors.grey[300]!),
+                            ),
+                            child: TextField(
+                              controller: _messageController,
+                              maxLines: null,
+                              enabled: !messagesState.isSending,
+                              decoration: InputDecoration(
+                                hintText: 'Type a message...',
+                                hintStyle: TextStyle(
+                                  color: Colors.grey[400],
+                                  fontSize: 14,
+                                ),
+                                border: InputBorder.none,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
                               ),
-                              itemCount: messagesState.messages.length,
-                              itemBuilder: (context, index) {
-                                final message = messagesState
-                                    .messages[messagesState.messages.length - 1 - index];
-
-                                if (message is! Map) {
-                                  return const SizedBox.shrink();
-                                }
-
-                                final Map<String, dynamic> msg =
-                                    Map<String, dynamic>.from(message);
-
-                                final senderName =
-                                    msg['sender']?['name'] ?? 'Unknown';
-                                final content = msg['content'] ?? '';
-                                final timestamp = msg['createdAt'];
-
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 6,
-                                    horizontal: 8,
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        senderName,
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.blue.shade700,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 14,
-                                          vertical: 10,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: Colors.blue.shade50,
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                          border: Border.all(
-                                            color: Colors.blue.shade200,
-                                            width: 1,
-                                          ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.blue
-                                                  .withOpacity(0.1),
-                                              blurRadius: 4,
-                                              offset: const Offset(0, 2),
-                                            ),
-                                          ],
-                                        ),
-                                        child: Text(
-                                          content,
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.black87,
-                                            height: 1.4,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        _formatMessageTime(timestamp),
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: Colors.grey[500],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Colors.black87,
+                              ),
+                              onChanged: (text) {
+                                SocketService.sendTypingStatus(
+                                  widget.chatId,
+                                  text.isNotEmpty,
                                 );
                               },
                             ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border(
-                          top: BorderSide(color: Colors.grey[300]!),
+                          ),
                         ),
-                      ),
-                      child: SafeArea(
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[100],
-                                  borderRadius: BorderRadius.circular(24),
-                                  border:
-                                      Border.all(color: Colors.grey[300]!),
-                                ),
-                                child: TextField(
-                                  controller: _messageController,
-                                  maxLines: null,
-                                  enabled: !messagesState.isSending,
-                                  decoration: InputDecoration(
-                                    hintText: 'Type a message...',
-                                    hintStyle: TextStyle(
-                                      color: Colors.grey[400],
-                                      fontSize: 14,
-                                    ),
-                                    border: InputBorder.none,
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 12,
-                                    ),
-                                  ),
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            CircleAvatar(
-                              radius: 24,
-                              backgroundColor: Colors.blue.shade600,
-                              child: IconButton(
-                                icon: messagesState.isSending
-                                    ? const SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor:
-                                              AlwaysStoppedAnimation<Color>(
-                                            Colors.white,
-                                          ),
-                                        ),
-                                      )
-                                    : const Icon(
-                                        Icons.send,
-                                        color: Colors.white,
-                                        size: 20,
+                        const SizedBox(width: 8),
+                        CircleAvatar(
+                          radius: 24,
+                          backgroundColor: Colors.blue.shade600,
+                          child: IconButton(
+                            icon: messagesState.isSending
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
                                       ),
-                                onPressed: messagesState.isSending
-                                    ? null
-                                    : _sendMessage,
-                              ),
-                            ),
-                          ],
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.send,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                            onPressed: messagesState.isSending
+                                ? null
+                                : _sendMessage,
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
+              ],
+            ),
     );
   }
 }
