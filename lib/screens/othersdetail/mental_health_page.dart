@@ -106,7 +106,11 @@ class MentalHealthPage extends ConsumerWidget {
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [Color(0xff4A148C), Color(0xff6A1B9A), Color(0xff8E24AA)],
+              colors: [
+                Color(0xff4A148C),
+                Color(0xff6A1B9A),
+                Color(0xff8E24AA)
+              ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -129,7 +133,6 @@ class MentalHealthPage extends ConsumerWidget {
               ),
             ),
           ),
-
           // Scrollable Content
           ListView(
             padding: const EdgeInsets.fromLTRB(16, 100, 16, 24),
@@ -138,7 +141,6 @@ class MentalHealthPage extends ConsumerWidget {
               _sectionHeader('🧠 Mental Health Professionals'),
               const SizedBox(height: 10),
               ...professionals.map((p) => _glassProfessionalCard(context, p)),
-
               const SizedBox(height: 30),
               _sectionHeader('🎓 Career Guidance & Programs'),
               const SizedBox(height: 10),
@@ -166,7 +168,6 @@ class MentalHealthPage extends ConsumerWidget {
 
   // Glassmorphic Professional Card
   Widget _glassProfessionalCard(BuildContext context, Professional p) {
-  Widget _professionalCard(BuildContext context, Professional p) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       child: ClipRRect(
@@ -211,7 +212,6 @@ class MentalHealthPage extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(width: 14),
-
                 // Details
                 Expanded(
                   child: Column(
@@ -308,7 +308,6 @@ class MentalHealthPage extends ConsumerWidget {
                     ),
                   ),
                 ),
-
                 // Text Details
                 Padding(
                   padding: const EdgeInsets.all(14),

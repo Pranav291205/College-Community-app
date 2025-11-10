@@ -23,7 +23,7 @@ class ChatService {
       print('💬 Getting or creating direct chat with user: $userId');
 
       final response = await http.post(
-        Uri.parse('$chatApiUrl/api/chat/access'),
+        Uri.parse('$chatApiUrl/api/chat'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',

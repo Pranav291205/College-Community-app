@@ -3,7 +3,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// --- Providers (Unchanged) ---
+// --- Providers ---
 
 final placementsDataProvider = Provider<List<Map<String, String>>>((ref) {
   return [
@@ -71,9 +71,7 @@ final barChartDataProvider = Provider<List<BarChartGroupData>>((ref) {
     ),
     BarChartGroupData(
       x: 2,
-      barRods: [
-        BarChartRodData(toY: 72, color: Colors.orangeAccent, width: 18),
-      ],
+      barRods: [BarChartRodData(toY: 72, color: Colors.orangeAccent, width: 18)],
     ),
     BarChartGroupData(
       x: 3,
@@ -81,9 +79,7 @@ final barChartDataProvider = Provider<List<BarChartGroupData>>((ref) {
     ),
     BarChartGroupData(
       x: 4,
-      barRods: [
-        BarChartRodData(toY: 58, color: Colors.purpleAccent, width: 18),
-      ],
+      barRods: [BarChartRodData(toY: 58, color: Colors.purpleAccent, width: 18)],
     ),
   ];
 });
@@ -125,7 +121,11 @@ class LeaderboardPage extends ConsumerWidget {
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [Color(0xff4A148C), Color(0xff6A1B9A), Color(0xff8E24AA)],
+              colors: [
+                Color(0xff4A148C),
+                Color(0xff6A1B9A),
+                Color(0xff8E24AA)
+              ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -145,19 +145,9 @@ class LeaderboardPage extends ConsumerWidget {
                 ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildGraphCard(
-                title: 'Placement Statistics 2024',
-                graph: _buildBarChart(ref),
               ),
             ),
           ),
-
           // Foreground Content
           SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(16, 100, 16, 20),
@@ -174,7 +164,6 @@ class LeaderboardPage extends ConsumerWidget {
                   child: SizedBox(height: 200, child: _buildLineChart(ref)),
                 ),
                 const SizedBox(height: 30),
-
                 const Text(
                   'Top Placements',
                   style: TextStyle(
@@ -183,38 +172,17 @@ class LeaderboardPage extends ConsumerWidget {
                     color: Colors.white,
                     letterSpacing: 0.6,
                   ),
-              _buildGraphCard(
-                title: 'Branch-wise Placements',
-                graph: _buildLineChart(ref),
-              ),
-              const SizedBox(height: 24),
-
-              const Text(
-                'Top Placements',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
                 ),
                 const SizedBox(height: 16),
-
                 SizedBox(
                   height: 250,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     itemCount: placements.length,
                     itemBuilder: (context, index) {
-                      return _placementCard(index + 1, placements[index]);
+                      return _buildPlacementCard(index + 1, placements[index]);
                     },
                   ),
-              SizedBox(
-                height: 240,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: placements.length,
-                  itemBuilder: (context, index) {
-                    return _buildPlacementCard(index + 1, placements[index]);
-                  },
                 ),
               ],
             ),
@@ -347,6 +315,7 @@ class LeaderboardPage extends ConsumerWidget {
             sideTitles: SideTitles(showTitles: false),
           ),
         ),
+        borderData: FlBorderData(show: false),
         lineBarsData: [
           LineChartBarData(
             spots: spots,
@@ -365,7 +334,7 @@ class LeaderboardPage extends ConsumerWidget {
   }
 
   // --- Placement Card ---
-  Widget _placementCard(int rank, Map<String, String> data) {
+  Widget _buildPlacementCard(int rank, Map<String, String> data) {
     return Container(
       width: 290,
       margin: const EdgeInsets.only(right: 16),
@@ -411,31 +380,6 @@ class LeaderboardPage extends ConsumerWidget {
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
-                    Container(
-                      width: 70,
-                      height: 70,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.grey.shade300,
-                          width: 2,
-                        ),
-                      ),
-                      child: ClipOval(
-                        child: Image.asset(
-                          data['image']!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Colors.primaries[rank %
-                                        Colors.primaries.length],
-                                    Colors.primaries[(rank + 3) %
-                                        Colors.primaries.length],
-                                  ],
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -448,27 +392,6 @@ class LeaderboardPage extends ConsumerWidget {
                                 ),
                               ),
                             ],
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            data['name']!,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
@@ -482,49 +405,16 @@ class LeaderboardPage extends ConsumerWidget {
                           size: 18,
                         ),
                         const SizedBox(width: 6),
-                        Text(
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.business, size: 16, color: Colors.blue[700]),
-                      const SizedBox(width: 6),
-                      Flexible(
-                        child: Text(
-                          data['company']!,
-                          style: const TextStyle(
-                            color: Colors.cyanAccent,
-                            fontWeight: FontWeight.w600,
+                        Expanded(
+                          child: Text(
+                            data['company']!,
+                            style: const TextStyle(
+                              color: Colors.cyanAccent,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Colors.green.shade50, Colors.green.shade100],
                     ),
                     const SizedBox(height: 8),
                     Row(
@@ -556,6 +446,14 @@ class LeaderboardPage extends ConsumerWidget {
                     decoration: BoxDecoration(
                       color: _getRankColor(rank),
                       borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _getRankColor(rank).withOpacity(0.3),
+                          spreadRadius: 1,
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: Text(
                       '#$rank',
@@ -571,35 +469,6 @@ class LeaderboardPage extends ConsumerWidget {
             ),
           ),
         ),
-
-          Positioned(
-            top: 8,
-            right: 8,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: _getRankColor(rank),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: _getRankColor(rank).withOpacity(0.3),
-                    spreadRadius: 1,
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Text(
-                '#$rank',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

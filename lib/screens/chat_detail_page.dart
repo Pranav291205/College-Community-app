@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/legacy.dart';
 import '../services/chat_service.dart';
 import '../services/socket_service.dart';
 
-// Provider for messages state
 final messagesProvider =
     StateNotifierProvider.family<MessagesNotifier, MessagesState, String>(
       (ref, chatId) => MessagesNotifier(chatId),
@@ -270,8 +269,6 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
             ),
             const SizedBox(height: 2),
             Text(
-              'Online',
-              style: TextStyle(fontSize: 12, color: Colors.green[200]),
               _isOtherUserTyping ? 'typing...' : 'Online',
               style: TextStyle(
                 fontSize: 12,
@@ -329,16 +326,6 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
                       textAlign: TextAlign.center,
                     ),
                   ),
-                  ),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      messagesState.errorMessage ?? 'Unknown error',
-                      style: TextStyle(fontSize: 14, color: Colors.red[500]),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
                   const SizedBox(height: 24),
                   ElevatedButton.icon(
                     onPressed: () => ref
@@ -355,7 +342,6 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
             )
           : Column(
               children: [
-                // ✅ MESSAGES LIST
                 Expanded(
                   child: messagesState.messages.isEmpty
                       ? Center(
@@ -423,48 +409,12 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Sender name
                                   Text(
                                     senderName,
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.blue.shade700,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  // Message bubble
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 14,
-                                      vertical: 10,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.blue.shade50,
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: Colors.blue.shade200,
-                                        width: 1,
-                                      ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.blue.withOpacity(0.1),
-                                          blurRadius: 4,
-                                          offset: const Offset(0, 2),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Text(
-                                      content,
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.black87,
-                                        height: 1.4,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  // Timestamp
                                     ),
                                   ),
                                   const SizedBox(height: 4),
@@ -509,76 +459,6 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
                               ),
                             );
                           },
-                        ),
-                ),
-                // ✅ MESSAGE INPUT AREA
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border(top: BorderSide(color: Colors.grey[300]!)),
-                  ),
-                  child: SafeArea(
-                    child: Row(
-                      children: [
-                        // Message input field
-                        Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.grey[100],
-                              borderRadius: BorderRadius.circular(24),
-                              border: Border.all(color: Colors.grey[300]!),
-                            ),
-                            child: TextField(
-                              controller: _messageController,
-                              maxLines: null,
-                              enabled: !messagesState.isSending,
-                              decoration: InputDecoration(
-                                hintText: 'Type a message...',
-                                hintStyle: TextStyle(
-                                  color: Colors.grey[400],
-                                  fontSize: 14,
-                                ),
-                                border: InputBorder.none,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 12,
-                                ),
-                              ),
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        // Send button
-                        CircleAvatar(
-                          radius: 24,
-                          backgroundColor: Colors.blue.shade600,
-                          child: IconButton(
-                            icon: messagesState.isSending
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.white,
-                                      ),
-                                    ),
-                                  )
-                                : const Icon(
-                                    Icons.send,
-                                    color: Colors.white,
-                                    size: 20,
-                                  ),
-                            onPressed: messagesState.isSending
-                                ? null
-                                : _sendMessage,
-                          ),
-                        ),
                         ),
                 ),
                 Container(

@@ -52,8 +52,6 @@ class AcademicFeature extends ConsumerWidget {
             fontSize: 24,
             fontWeight: FontWeight.w800,
             letterSpacing: 1.2,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 1.3,
             shadows: [
               Shadow(
                 color: Colors.black45,
@@ -69,11 +67,10 @@ class AcademicFeature extends ConsumerWidget {
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [Color(0xff4A148C), Color(0xff6A1B9A), Color(0xff8E24AA)],
               colors: [
-                Color(0xFF09276D), 
-                Color(0xFF1661B2),
-                Color(0xFF09276D),
+                Color(0xff4A148C),
+                Color(0xff6A1B9A),
+                Color(0xff8E24AA)
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -83,21 +80,29 @@ class AcademicFeature extends ConsumerWidget {
       ),
       body: Stack(
         children: [
-          // Background gradient
+          // Background image
           Container(
             decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/images/academics.jpg'),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          // Lighter gradient overlay to keep image visible
+          Container(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Color(0xff3E1E68),
-                  Color(0xff2B1055),
-                  Color(0xff120A2A),
+                  const Color(0xff3E1E68).withOpacity(0.6), // 60% opacity
+                  const Color(0xff2B1055).withOpacity(0.7), // 70% opacity
+                  const Color(0xff120A2A).withOpacity(0.8), // 80% opacity
                 ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
             ),
           ),
-
           // Glass cards grid
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 120, 20, 20),
@@ -108,35 +113,6 @@ class AcademicFeature extends ConsumerWidget {
                 crossAxisSpacing: 20,
                 mainAxisSpacing: 24,
                 childAspectRatio: 0.95,
-          Container(
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/images/academics.jpg'), 
-                fit: BoxFit.cover, 
-              ),
-            ),
-          ),
-
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 20,
-                  crossAxisSpacing: 20,
-                ),
-                shrinkWrap: true,
-                itemCount: academicBlocks.length,
-                itemBuilder: (context, index) {
-                  final block = academicBlocks[index];
-                  return _buildFeatureBlock(
-                    context,
-                    title: block['title'] as String,
-                    color: block['color'] as Color,
-                    page: block['page'] as Widget,
-                  );
-                },
               ),
               itemCount: academicBlocks.length,
               itemBuilder: (context, index) {
@@ -183,32 +159,6 @@ class AcademicFeature extends ConsumerWidget {
                   blurRadius: 15,
                   spreadRadius: 1,
                   offset: const Offset(3, 6),
-      child: Container(
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 8,
-              offset: const Offset(2, 4),
-            ),
-          ],
-        ),
-        child: Center(
-          child: Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 22, 
-              fontWeight: FontWeight.w900,
-              letterSpacing: 1.3,
-              shadows: [
-                Shadow(
-                  color: Colors.black54, 
-                  offset: Offset(2, 2),
-                  blurRadius: 4,
                 ),
               ],
             ),
@@ -240,7 +190,6 @@ class AcademicFeature extends ConsumerWidget {
                     ),
                     child: Icon(icon, size: 40, color: Colors.white),
                   ),
-
                   const SizedBox(height: 16),
                   // Title
                   Text(
@@ -254,7 +203,6 @@ class AcademicFeature extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-
                   // Decorative line
                   Container(
                     width: 40,
