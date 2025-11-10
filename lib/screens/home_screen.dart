@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:community_app/models/search_posts_modal.dart';
 import 'package:community_app/providers/posts_provider.dart';
 import 'package:community_app/screens/chatbot.dart';
@@ -11,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 
+
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
@@ -18,6 +20,160 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final postsAsync = ref.watch(postsProvider);
 
+return Scaffold(
+  body: NestedScrollView(
+    floatHeaderSlivers: true, 
+    headerSliverBuilder: (context, innerBoxIsScrolled) => [
+      SliverOverlapAbsorber(
+        handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+        sliver:SliverAppBar(
+        pinned: false,     // ❌ not stuck
+        floating: true,    // ✅ comes back when scrolling up
+        snap: true,        // ✅ instant reappear like Insta
+        elevation: 0,
+        toolbarHeight: 75,
+        backgroundColor: Colors.transparent,
+        scrolledUnderElevation: 0, 
+
+        // ✅ Gradient but transparent
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Color.fromARGB(166, 18, 4, 143),  // 65% transparent gradient
+                Color.fromARGB(166, 63, 11, 126),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+
+        // ✅ Your title row (unchanged)
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ShaderMask(
+              shaderCallback: (bounds) => const LinearGradient(
+                colors: [Colors.white, Color(0xFFE3F2FD)],
+              ).createShader(bounds),
+              child: const Text(
+                'CollabSpace',
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 26,
+                  letterSpacing: 1.5,
+                  color: Colors.white,
+                  fontFamily: 'Poppins',
+                  shadows: [
+                    Shadow(
+                      color: Colors.black26,
+                      offset: Offset(1, 2),
+                      blurRadius: 4,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
+        ),
+
+        // ✅ Menu actions (unchanged)
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_horiz, color: Colors.white, size: 28),
+            onSelected: (value) {
+              if (value == 'search_users') _showSearchUsersModal(context);
+              else if (value == 'search_posts') _showSearchPostsModal(context);
+            },
+            itemBuilder: (BuildContext context) => [
+              PopupMenuItem(
+                value: 'search_users',
+                child: Row(
+                  children: [
+                    Icon(Icons.person_search, color: Colors.grey[700]),
+                    const SizedBox(width: 12),
+                    const Text('Search Users'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'search_posts',
+                child: Row(
+                  children: [
+                    Icon(Icons.search, color: Colors.grey[700]),
+                    const SizedBox(width: 12),
+                    const Text('Search Posts'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+
+
+
+      ),
+    ],
+
+    // ✅ Body starts BELOW AppBar now
+    body: SafeArea(
+      top: false,
+      child: Builder(
+        builder: (context) {
+          return Stack(
+            children: [
+              Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Color.fromARGB(255, 0, 0, 0),
+                      Color.fromARGB(255, 76, 48, 191),
+                      Color.fromARGB(255, 0, 0, 0),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+              ),
+              BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+                child: Container(color: Colors.white.withOpacity(0.05)),
+              ),
+
+              CustomScrollView(
+                slivers: [
+                  SliverOverlapInjector(
+                    handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+                  ),
+                  SliverToBoxAdapter(
+                    child: RefreshIndicator(
+                      onRefresh: () async {
+                        ref.invalidate(postsProvider);
+                        await Future.delayed(const Duration(milliseconds: 800));
+                      },
+                      child: postsAsync.when(
+                        data: (posts) {
+                          if (posts.isEmpty) {
+                            return const Center(child: Text("No posts yet"));
+                          }
+                          return ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            padding: const EdgeInsets.all(16),
+                            itemCount: posts.length,
+                            itemBuilder: (context, index) => PostCard(
+                              post: posts[index],
+                              onPostDeleted: () => ref.refresh(postsProvider),
+                            ),
+                          );
+                        },
+                        loading: () => const Center(child: CircularProgressIndicator()),
+                        error: (err, _) => Center(child: Text("Error: $err")),
+                      ),
+                    ),
     return Scaffold(
       appBar: AppBar(
         elevation: 6,
@@ -191,6 +347,16 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ),
               ),
+
+              const MovableChatBotButton(),
+            ],
+          );
+        },
+      ),
+    ),
+  ),
+);
+
             ),
             const MovableChatBotButton(),
           ],
@@ -204,6 +370,7 @@ class HomeScreen extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      builder: (context) => SearchUsersModal(searchController: searchController),
       builder: (context) => SearchUsersModal(),
     );
   }
@@ -213,6 +380,7 @@ class HomeScreen extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      builder: (context) => SearchPostsModal(searchController: searchController),
       builder: (context) => SearchPostsModal(),
     );
   }
@@ -311,17 +479,15 @@ class _PostCardState extends State<PostCard> {
     super.initState();
     print('\n🆕 PostCard initState - Post ID: ${widget.post['_id']}');
     _getCurrentUserId();
-
     _initializePost();
   }
 
   void _getCurrentUserId() {
     try {
-      final token = PostService.authToken;
+      final token = PostService.authToken; // kept as your original source
       print('🔐 Token: ${token != null ? "exists" : "null"}');
 
       if (token == null) {
-        print('⚠️ No auth token');
         _currentUserId = null;
         return;
       }
@@ -331,9 +497,7 @@ class _PostCardState extends State<PostCard> {
         _currentUserId = decoded['userId'] ?? decoded['id'] ?? decoded['_id'];
         print('👤 CURRENT USER ID SET: $_currentUserId');
 
-        if (mounted) {
-          setState(() {});
-        }
+        if (mounted) setState(() {});
       } catch (e) {
         print('❌ Could not decode token: $e');
         _currentUserId = null;
@@ -345,7 +509,7 @@ class _PostCardState extends State<PostCard> {
   }
 
   String _getInitial(String name) {
-    if (name.isEmpty) return 'A';
+    if (name == null || name.isEmpty) return 'A';
     return name[0].toUpperCase();
   }
 
@@ -373,6 +537,60 @@ class _PostCardState extends State<PostCard> {
     }
     return '';
   }
+
+  void _initializePost() {
+    try {
+      print('🔍 Initializing post: ${widget.post['_id']}');
+      print('📊 Post keys: ${widget.post.keys.toList()}');
+
+      // ===== LIKES =====
+      final likes = widget.post['likes'];
+      print('❤️ Likes data: $likes (type: ${likes.runtimeType})');
+
+      if (likes is int) {
+        _likeCount = likes;
+        _isLiked = false;
+      } else if (likes is List) {
+        _likeCount = likes.length;
+        if (_currentUserId != null && _currentUserId!.isNotEmpty) {
+          _isLiked = likes.any((like) {
+            if (like is String) return like == _currentUserId;
+            if (like is Map) return (like['_id'] ?? like['userId'] ?? like['id']) == _currentUserId;
+            return false;
+          });
+          print('❤️ User liked this post: $_isLiked (count: $_likeCount)');
+        }
+      } else {
+        _likeCount = 0;
+        _isLiked = false;
+      }
+
+      // ===== DISLIKES =====
+      final dislikes = widget.post['dislikes'];
+      print('👎 Dislikes data: $dislikes (type: ${dislikes.runtimeType})');
+
+      if (dislikes is int) {
+        _dislikeCount = dislikes;
+        _isDisliked = false;
+      } else if (dislikes is List) {
+        _dislikeCount = dislikes.length;
+        if (_currentUserId != null && _currentUserId!.isNotEmpty) {
+          _isDisliked = dislikes.any((dislike) {
+            if (dislike is String) return dislike == _currentUserId;
+            if (dislike is Map) return (dislike['_id'] ?? dislike['userId'] ?? dislike['id']) == _currentUserId;
+            return false;
+          });
+          print('👎 User disliked this post: $_isDisliked (count: $_dislikeCount)');
+        }
+      } else {
+        _dislikeCount = 0;
+        _isDisliked = false;
+      }
+
+      print('✅ Final state - Liked: $_isLiked ($_likeCount), Disliked: $_isDisliked ($_dislikeCount)\n');
+
+      if (widget.post['mediaType'] == 'video' && widget.post['mediaUrl'] != null) {
+        _initializeVideo();
 
   void _initializePost() async {  
   try {
@@ -499,6 +717,17 @@ class _PostCardState extends State<PostCard> {
     });
 
     try {
+      // using instance-style as you requested
+      final comments = await CommentService.getPostComments(widget.post['_id']);
+      List<dynamic> result = comments ?? [];
+      if (result.isEmpty) {
+        final fallback = await CommentService.getAllCommentsForPost(widget.post['_id']);
+        result = fallback ?? [];
+      }
+      if (mounted) setState(() {
+        _comments = result;
+        _loadingComments = false;
+      });
       final result = await PostService.getComments(
         postId: widget.post['_id'],
         page: currentPage,
@@ -525,6 +754,27 @@ class _PostCardState extends State<PostCard> {
     }
   }
 
+  Future<void> _addComment() async {
+    if (_commentController.text.trim().isEmpty) return;
+    setState(() => _isCommenting = true);
+    try {
+      final res = await CommentService.addComment(widget.post['_id'], _commentController.text.trim(), postId: '', text: '');
+      setState(() => _isCommenting = false);
+      if (res != null && (res['success'] == true || res['status'] == 'success')) {
+        _commentController.clear();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('✅ Comment added!'), backgroundColor: Colors.green, duration: Duration(seconds: 1)),
+          );
+        }
+        await _loadComments();
+      } else {
+        // fallback: attempt to reload comments anyway
+        await _loadComments();
+      }
+    } catch (e) {
+      print('❌ Error adding comment: $e');
+      setState(() => _isCommenting = false);
   Future<void> addComment(TextEditingController controller) async {
   if (controller.text.trim().isEmpty) return;
   
@@ -597,23 +847,26 @@ class _PostCardState extends State<PostCard> {
     setState(() => _isLiking = true);
     try {
       if (_isDisliked) {
+        // remove dislike first
         await DislikeService.dislikePost(widget.post['_id']);
-        if (mounted)
-          setState(() {
-            _isDisliked = false;
-            _dislikeCount = _dislikeCount > 0 ? _dislikeCount - 1 : 0;
-          });
+        if (mounted) setState(() {
+          _isDisliked = false;
+          _dislikeCount = _dislikeCount > 0 ? _dislikeCount - 1 : 0;
+        });
       }
 
       final result = _isLiked
           ? await LikeService.unlikePost(widget.post['_id'])
           : await LikeService.likePost(widget.post['_id']);
 
-      if (result['success'] && mounted) {
-        setState(() {
-          _isLiked = !_isLiked;
-          if (result['likes'] is int) _likeCount = result['likes'];
-        });
+      if (result != null && result['success'] == true) {
+        if (mounted) {
+          setState(() {
+            _isLiked = !_isLiked;
+            if (result['likes'] is int) _likeCount = result['likes'];
+            else _likeCount = _isLiked ? _likeCount + 1 : (_likeCount > 0 ? _likeCount - 1 : 0);
+          });
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(_isLiked ? '❤️ Liked!' : '👍 Removed'),
@@ -623,7 +876,7 @@ class _PostCardState extends State<PostCard> {
         );
       }
     } catch (e) {
-      print('❌ Error: $e');
+      print('❌ Error liking/unliking: $e');
     }
     if (mounted) setState(() => _isLiking = false);
   }
@@ -634,15 +887,22 @@ class _PostCardState extends State<PostCard> {
     try {
       if (_isLiked) {
         await LikeService.unlikePost(widget.post['_id']);
-        if (mounted)
-          setState(() {
-            _isLiked = false;
-            _likeCount = _likeCount > 0 ? _likeCount - 1 : 0;
-          });
+        if (mounted) setState(() {
+          _isLiked = false;
+          _likeCount = _likeCount > 0 ? _likeCount - 1 : 0;
+        });
       }
 
       final result = await DislikeService.dislikePost(widget.post['_id']);
 
+      if (result != null && result['success'] == true) {
+        if (mounted) {
+          setState(() {
+            _isDisliked = !_isDisliked;
+            if (result['dislikes'] is int) _dislikeCount = result['dislikes'];
+            else _dislikeCount = _isDisliked ? _dislikeCount + 1 : (_dislikeCount > 0 ? _dislikeCount - 1 : 0);
+          });
+        }
       if (result['success'] && mounted) {
         setState(() {
           _isDisliked = !_isDisliked;
@@ -662,7 +922,7 @@ class _PostCardState extends State<PostCard> {
         );
       }
     } catch (e) {
-      print('❌ Error: $e');
+      print('❌ Error disliking: $e');
     }
     if (mounted) setState(() => _isDisliking = false);
   }
@@ -675,28 +935,21 @@ class _PostCardState extends State<PostCard> {
     if (postUserId.isEmpty || postUserId != _currentUserId) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('❌ You can only delete your own posts'),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 2),
-          ),
+          const SnackBar(content: Text('❌ You can only delete your own posts'), backgroundColor: Colors.red, duration: Duration(seconds: 2)),
         );
       }
       return;
     }
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF162447),
-        title: const Text(
-          'Delete Post?',
-          style: TextStyle(color: Colors.white),
-        ),
-        content: const Text(
-          'Are you sure you want to delete this post? This action cannot be undone.',
-          style: TextStyle(color: Colors.white70),
-        ),
+        title: const Text('Delete Post?', style: TextStyle(color: Colors.white)),
+        content: const Text('Are you sure you want to delete this post? This action cannot be undone.', style: TextStyle(color: Colors.white70)),
         actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel', style: TextStyle(color: Colors.white70))),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: const Text(
@@ -715,51 +968,33 @@ class _PostCardState extends State<PostCard> {
     if (confirmed != true) return;
 
     setState(() => _isDeleting = true);
-
     try {
       final postId = widget.post['_id'];
-      print('🗑️ Deleting post: $postId');
-
       final result = await PostService.deletePost(postId);
 
-      if (result['success']) {
-        print('✅ Post deleted');
+      if (result != null && result['success'] == true) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('✅ Post deleted successfully'),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 2),
-            ),
+            const SnackBar(content: Text('✅ Post deleted successfully'), backgroundColor: Colors.green, duration: Duration(seconds: 2)),
           );
           widget.onPostDeleted();
         }
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('❌ ${result['message']}'),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 2),
-            ),
+            SnackBar(content: Text('❌ ${result?['message'] ?? 'Delete failed'}'), backgroundColor: Colors.red, duration: const Duration(seconds: 2)),
           );
         }
       }
     } catch (e) {
-      print('❌ Error: $e');
+      print('❌ Error deleting post: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 2),
-          ),
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red, duration: const Duration(seconds: 2)),
         );
       }
-    }
-
-    if (mounted) {
-      setState(() => _isDeleting = false);
+    } finally {
+      if (mounted) setState(() => _isDeleting = false);
     }
   }
 
@@ -770,9 +1005,195 @@ class _PostCardState extends State<PostCard> {
     super.dispose();
   }
 
+  // --- helper to build media (image/video) ---
+  Widget _buildMediaWidget() {
+    final mediaUrl = widget.post['mediaUrl'];
+    final mediaType = widget.post['mediaType'];
+
+    if (mediaUrl == null || mediaUrl.toString().isEmpty) return const SizedBox.shrink();
+
+    if (mediaType == 'video') {
+      if (_isVideoInitialized && _videoController != null) {
+        return AspectRatio(
+          aspectRatio: _videoController!.value.aspectRatio,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              VideoPlayer(_videoController!),
+              IconButton(
+                icon: Icon(
+                  _videoController!.value.isPlaying ? Icons.pause_circle_outline : Icons.play_circle_outline,
+                  size: 64,
+                  color: Colors.white.withOpacity(0.9),
+                ),
+                onPressed: () {
+                  setState(() {
+                    _videoController!.value.isPlaying ? _videoController!.pause() : _videoController!.play();
+                  });
+                },
+              ),
+            ],
+          ),
+        );
+      } else {
+        return Container(
+          height: 250,
+          color: const Color.fromARGB(255, 38, 39, 40),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.video_library, size: 50, color: Colors.grey[600]),
+                const SizedBox(height: 8),
+                Text('Video unavailable', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+              ],
+            ),
+          ),
+        );
+      }
+    } else {
+      return Image.network(
+        mediaUrl,
+        width: double.infinity,
+        height: 250,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Center(
+            child: CircularProgressIndicator(
+              value: loadingProgress.expectedTotalBytes != null ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes! : null,
+            ),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) {
+          print('❌ Image load error: $error');
+          return Container(
+            height: 250,
+            color: const Color.fromARGB(255, 38, 39, 40),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.broken_image, size: 50, color: Colors.grey[600]),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text('Image unavailable', style: TextStyle(color: const Color.fromARGB(255, 125, 130, 136), fontSize: 12), textAlign: TextAlign.center),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    }
+  }
+
+  // --- helper to build comments section ---
+  Widget _buildCommentsSection() {
+    if (_loadingComments) {
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Center(child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))),
+      );
+    }
+
+    if (_comments.isNotEmpty) {
+      return Container(
+        constraints: const BoxConstraints(maxHeight: 250),
+        child: ListView.builder(
+          shrinkWrap: true,
+          itemCount: _comments.length,
+          itemBuilder: (_, index) {
+            final comment = _comments[index];
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 16,
+                        backgroundColor: Colors.blue,
+                        child: Text((comment['userName'] ?? 'A')[0].toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(comment['userName'] ?? 'Anonymous', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                            Text(comment['text'] ?? '', style: const TextStyle(fontSize: 13), maxLines: 2, overflow: TextOverflow.ellipsis),
+                            Text(_formatTimestamp(comment['createdAt']), style: TextStyle(fontSize: 11, color: Colors.grey[500])),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 12),
+                ],
+              ),
+            );
+          },
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Center(child: Text('No comments', style: TextStyle(color: Colors.grey[600]))),
+    );
+  }
+
+  Widget _glassButton({required IconData icon, required Color color, required int count, required VoidCallback? onTap}) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          margin: const EdgeInsets.symmetric(horizontal: 6),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(.08),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.white.withOpacity(.18)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: color, size: 20),
+              const SizedBox(width: 6),
+              Text("$count", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     try {
+      final userName = widget.post['authorName'] ?? widget.post['author'] ?? 'Anonymous User';
+      final postUserId = _extractPostUserId();
+      final isOwner = (_currentUserId != null && _currentUserId!.isNotEmpty && postUserId.isNotEmpty && postUserId == _currentUserId);
+
+      return Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withOpacity(0.2)),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20, spreadRadius: 2)
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: Padding(
+              padding: const EdgeInsets.all(2.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
       final userName =
           widget.post['authorName'] ??
           widget.post['author'] ??
@@ -818,22 +1239,14 @@ class _PostCardState extends State<PostCard> {
               padding: const EdgeInsets.all(12),
               child: Row(
                 children: [
-                  CircleAvatar(
-                    backgroundColor: Colors.blue,
-                    child: Text(
-                      _getInitial(userName),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  // Header
+                  Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
                       children: [
+                        CircleAvatar(
+                          backgroundColor: Colors.blue,
+                          child: Text(_getInitial(userName), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                         Text(
                           userName.isNotEmpty ? userName : 'Anonymous User',
                           style: const TextStyle(
@@ -844,28 +1257,83 @@ class _PostCardState extends State<PostCard> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        Text(
-                          _formatTimestamp(widget.post['createdAt']),
-                          style: TextStyle(
-                            color: const Color.fromARGB(255, 238, 235, 235),
-                            fontSize: 12,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(userName.isNotEmpty ? userName : 'Anonymous User', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14), maxLines: 1, overflow: TextOverflow.ellipsis),
+                              Text(_formatTimestamp(widget.post['createdAt']), style: TextStyle(color: const Color.fromARGB(255, 238, 235, 235), fontSize: 12)),
+                            ],
                           ),
                         ),
+                        if (isOwner)
+                          PopupMenuButton<String>(
+                            onSelected: (value) {
+                              if (value == 'delete') _deletePost();
+                            },
+                            itemBuilder: (BuildContext context) => [
+                              PopupMenuItem<String>(
+                                value: 'delete',
+                                child: Row(children: [Icon(Icons.delete, color: Colors.red[400], size: 20), const SizedBox(width: 12), const Text('Delete', style: TextStyle(color: Colors.black))]),
+                              ),
+                            ],
+                            child: Icon(Icons.more_vert, color: _isDeleting ? Colors.grey : Colors.black, size: 20),
+                          )
+                        else
+                          const SizedBox(width: 48),
                       ],
                     ),
                   ),
-                  if (isOwner)
-                    PopupMenuButton<String>(
-                      onSelected: (value) {
-                        if (value == 'delete') {
-                          _deletePost();
-                        }
-                      },
-                      itemBuilder: (BuildContext context) => [
-                        PopupMenuItem<String>(
-                          value: 'delete',
-                          child: Row(
+
+                  // Media
+                  if (widget.post['mediaUrl'] != null && widget.post['mediaUrl'].toString().isNotEmpty)
+                    if (widget.post['mediaType'] == 'image')
+                      Container(
+                        width: double.infinity,
+                        height: 250,
+                        color: Colors.grey[300],
+                        child: Image.network(
+                          widget.post['mediaUrl'],
+                          width: double.infinity,
+                          height: 250,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Center(
+                              child: CircularProgressIndicator(
+                                value: loadingProgress.expectedTotalBytes != null ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes! : null,
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            print('❌ Image load error: $error');
+                            return Container(
+                              height: 250,
+                              color: const Color.fromARGB(255, 38, 39, 40),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.broken_image, size: 50, color: Colors.grey[600]),
+                                  const SizedBox(height: 8),
+                                  Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Text('Image unavailable', style: TextStyle(color: const Color.fromARGB(255, 125, 130, 136), fontSize: 12), textAlign: TextAlign.center)),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      )
+                    else if (widget.post['mediaType'] == 'video')
+                      if (_isVideoInitialized)
+                        AspectRatio(
+                          aspectRatio: _videoController!.value.aspectRatio,
+                          child: Stack(
+                            alignment: Alignment.center,
                             children: [
+                              VideoPlayer(_videoController!),
+                              IconButton(
+                                icon: Icon(_videoController!.value.isPlaying ? Icons.pause_circle_outline : Icons.play_circle_outline, size: 64, color: const Color.fromARGB(255, 50, 51, 54)),
+                                onPressed: () => setState(() => _videoController!.value.isPlaying ? _videoController!.pause() : _videoController!.play()),
                               Icon(
                                 Icons.delete,
                                 color: Colors.red[400],
@@ -878,7 +1346,19 @@ class _PostCardState extends State<PostCard> {
                               ),
                             ],
                           ),
+                        )
+                      else
+                        Container(
+                          height: 250,
+                          color: const Color.fromARGB(255, 38, 39, 40),
+                          child: Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.video_library, size: 50, color: Colors.grey[600]), const SizedBox(height: 8), Text('Video unavailable', style: TextStyle(color: Colors.grey[600], fontSize: 12))])),
+
                         ),
+
+                  // Buttons row
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    child: Row(
                       ],
                       child: Icon(
                         Icons.more_vert,
@@ -960,15 +1440,27 @@ class _PostCardState extends State<PostCard> {
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
-                        VideoPlayer(_videoController!),
-                        IconButton(
-                          icon: Icon(
-                            _videoController!.value.isPlaying
-                                ? Icons.pause_circle_outline
-                                : Icons.play_circle_outline,
-                            size: 64,
-                            color: const Color.fromARGB(255, 50, 51, 54),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: (_isLiking || _isDisliking) ? null : _toggleLike,
+                            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                              Icon(_isLiked ? Icons.favorite : Icons.favorite_border, color: _isLiked ? const Color.fromARGB(255, 190, 31, 19) : const Color.fromARGB(255, 232, 212, 212), size: 22),
+                              const SizedBox(width: 8),
+                              Text(_likeCount.toString(), style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _isLiked ? Colors.red : const Color.fromARGB(255, 232, 212, 212))),
+                            ]),
                           ),
+                        ),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() => _showComments = !_showComments);
+                              if (_showComments && _comments.isEmpty) _loadComments();
+                            },
+                            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                              Icon(_showComments ? Icons.comment : Icons.comment_outlined, color: const Color.fromARGB(255, 232, 212, 212), size: 22),
+                              const SizedBox(width: 8),
+                              Text('${_comments.length}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: const Color.fromARGB(255, 232, 212, 212))),
+                            ]),
                           onPressed: () => setState(
                             () => _videoController!.value.isPlaying
                                 ? _videoController!.pause()
@@ -1065,67 +1557,60 @@ class _PostCardState extends State<PostCard> {
                               color: const Color.fromARGB(255, 232, 212, 212),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: (_isDisliking || _isLiking)
-                          ? null
-                          : _toggleDislike,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            _isDisliked
-                                ? Icons.thumb_down
-                                : Icons.thumb_down_outlined,
-                            color: _isDisliked
-                                ? Colors.orange
-                                : const Color.fromARGB(255, 232, 212, 212),
-                            size: 22,
+                        ),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: (_isDisliking || _isLiking) ? null : _toggleDislike,
+                            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                              Icon(_isDisliked ? Icons.thumb_down : Icons.thumb_down_outlined, color: _isDisliked ? Colors.orange : const Color.fromARGB(255, 232, 212, 212), size: 22),
+                              const SizedBox(width: 8),
+                              Text(_dislikeCount.toString(), style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _isDisliked ? Colors.orange : const Color.fromARGB(255, 232, 212, 212))),
+                            ]),
                           ),
-                          const SizedBox(width: 8),
-                          Text(
-                            _dislikeCount.toString(),
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: _isDisliked
-                                  ? Colors.orange
-                                  : const Color.fromARGB(255, 232, 212, 212),
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.post['title'] ?? '',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    widget.post['description'] ?? '',
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                  const SizedBox(height: 12),
-                ],
-              ),
-            ),
 
+                  // Title + description
+                  Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(widget.post['title'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    const SizedBox(height: 4),
+                    Text(widget.post['description'] ?? '', style: const TextStyle(fontSize: 14)),
+                    const SizedBox(height: 12),
+                  ])),
+
+                  // Comments
+                  if (_showComments) ...[
+                    const Divider(height: 1),
+                    if (_loadingComments)
+                      Padding(padding: const EdgeInsets.all(16), child: Center(child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))))
+                    else if (_comments.isNotEmpty)
+                      Container(constraints: const BoxConstraints(maxHeight: 250), child: ListView.builder(shrinkWrap: true, itemCount: _comments.length, itemBuilder: (_, index) {
+                        final comment = _comments[index];
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                            Row(children: [
+                              CircleAvatar(radius: 16, backgroundColor: Colors.blue, child: Text((comment['userName'] ?? 'A')[0].toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold))),
+                              const SizedBox(width: 8),
+                              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                Text(comment['userName'] ?? 'Anonymous', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                Text(comment['text'] ?? '', style: const TextStyle(fontSize: 13), maxLines: 2, overflow: TextOverflow.ellipsis),
+                                Text(_formatTimestamp(comment['createdAt']), style: TextStyle(fontSize: 11, color: Colors.grey[500])),
+                              ])),
+                            ]),
+                            const Divider(height: 12),
+                          ]),
+                        );
+                      }))
+                    else
+                      Padding(padding: const EdgeInsets.all(16), child: Center(child: Text('No comments', style: TextStyle(color: Colors.grey[600])))),
+                    Padding(padding: const EdgeInsets.all(12), child: Row(children: [
+                      Expanded(child: TextField(controller: _commentController, decoration: InputDecoration(hintText: 'Comment...', border: OutlineInputBorder(borderRadius: BorderRadius.circular(24)), contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8)), enabled: !_isCommenting, maxLines: 1)),
+                      const SizedBox(width: 8),
+                      _isCommenting ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2)) : IconButton(icon: const Icon(Icons.send, color: Colors.blue), onPressed: _addComment),
+                    ])),
             if (showComments) ...[
               const Divider(height: 1),
               if (totalComments > 0)
@@ -1283,19 +1768,14 @@ class _PostCardState extends State<PostCard> {
                                   },
                           ),
                   ],
-                ),
+                ],
               ),
-            ],
-          ],
+            ),
+          ),
         ),
       );
     } catch (e) {
-      return Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(16),
-        color: Colors.white,
-        child: Center(child: Text('Error: $e')),
-      );
+      return Container(margin: const EdgeInsets.only(bottom: 16), padding: const EdgeInsets.all(16), color: Colors.white, child: Center(child: Text('Error: $e')));
     }
   }
 
@@ -1313,6 +1793,29 @@ class _PostCardState extends State<PostCard> {
     }
   }
 }
+Widget _glassButton({required IconData icon, required Color color, required int count, Function()? onTap}) {
+  return GestureDetector(
+    onTap: onTap,
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(.12),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withOpacity(.25)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(width: 5),
+          Text(
+            "$count",
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          ),
+        ],
+      ),
+    ),
+  );
+}
 
 class MovableChatBotButton extends StatefulWidget {
   const MovableChatBotButton({Key? key}) : super(key: key);
@@ -1321,19 +1824,28 @@ class MovableChatBotButton extends StatefulWidget {
   State<MovableChatBotButton> createState() => _MovableChatBotButtonState();
 }
 
+
+
+class _MovableChatBotButtonState extends State<MovableChatBotButton> with SingleTickerProviderStateMixin {
 class _MovableChatBotButtonState extends State<MovableChatBotButton>
     with SingleTickerProviderStateMixin {
   double x = 20;
   double y = 500;
   late AnimationController _controller;
+  late Animation<double> _floatAnimation;
 
   @override
   void initState() {
     super.initState();
+
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat(reverse: true);
+
+    _floatAnimation = Tween<double>(begin: 0, end: 8).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
   }
 
   @override
@@ -1345,8 +1857,97 @@ class _MovableChatBotButtonState extends State<MovableChatBotButton>
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
-    const double buttonSize = 60;
+    const double buttonSize = 62;
 
+    return AnimatedBuilder(
+      animation: _floatAnimation,
+      builder: (context, child) {
+        return Positioned(
+          left: x,
+          top: y + _floatAnimation.value, // floating animation
+          child: GestureDetector(
+            onPanUpdate: (details) {
+              setState(() {
+                x = (x + details.delta.dx).clamp(0.0, screenSize.width - buttonSize);
+                y = (y + details.delta.dy).clamp(0.0, screenSize.height - buttonSize - 80);
+              });
+            },
+
+            // ✅ Open as glass popup
+            onTap: () {
+              showDialog(
+                context: context,
+                barrierDismissible: true,
+                barrierColor: Colors.black.withOpacity(0.35),
+                builder: (context) => const Dialog(
+                  backgroundColor: Colors.transparent,
+                  insetPadding: EdgeInsets.all(12),
+                  child: ChatBotPage(),
+                ),
+              );
+            },
+
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // ✨ Glow Ring
+                Container(
+                  width: buttonSize + 14,
+                  height: buttonSize + 14,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.purpleAccent.withOpacity(0.6),
+                        blurRadius: 18,
+                        spreadRadius: 4,
+                      ),
+                      BoxShadow(
+                        color: Colors.blueAccent.withOpacity(0.3),
+                        blurRadius: 22,
+                        spreadRadius: 6,
+                      ),
+                    ],
+                  ),
+                ),
+
+                // 💎 Glassmorphic Button
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(50),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                    child: Container(
+                      width: buttonSize,
+                      height: buttonSize,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.purple.withOpacity(0.3),
+                            Colors.blue.withOpacity(0.2),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.6),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: const Offset(4, 4),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.smart_toy_outlined,
+                        color: Colors.white,
+                        size: 30,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
     return Positioned(
       left: x,
       top: y,
@@ -1388,8 +1989,8 @@ class _MovableChatBotButtonState extends State<MovableChatBotButton>
             color: Colors.white,
             size: 30,
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

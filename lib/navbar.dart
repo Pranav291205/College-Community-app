@@ -1,4 +1,6 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'screens/home_screen.dart';
@@ -16,16 +18,6 @@ final pagesProvider = Provider<List<Widget>>((ref) {
     PostScreen(),
     ProfileScreen(),
     OthersScreen(),
-  ];
-});
-
-final navColorsProvider = Provider<List<Color>>((ref) {
-  return const [
-    Color(0xFFAEDFF7),
-    Color.fromARGB(255, 161, 204, 245),
-    Color(0xFFAEDFF7),
-    Color.fromARGB(255, 161, 204, 245),
-    Color(0xFFAEDFF7),
   ];
 });
 
@@ -48,10 +40,6 @@ final navIconsProvider = Provider<Map<String, List<IconData>>>((ref) {
   };
 });
 
-final navLabelsProvider = Provider<List<String>>((ref) {
-  return ['Home', 'Chat', 'Post', 'Profile', 'Others'];
-});
-
 class NavBarPage extends ConsumerStatefulWidget {
   const NavBarPage({Key? key}) : super(key: key);
 
@@ -62,106 +50,33 @@ class NavBarPage extends ConsumerStatefulWidget {
 class _NavBarPageState extends ConsumerState<NavBarPage>
     with SingleTickerProviderStateMixin {
   late PageController _pageController;
+  double navbarBottomPosition = -120; // start hidden
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: 0);
+
+    // Slide-in navbar animation
+    Future.delayed(const Duration(milliseconds: 300), () {
+      setState(() {
+        navbarBottomPosition = 0;
+      });
+    });
+
+    // System nav buttons behind
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarDividerColor: Colors.transparent,
+      systemNavigationBarIconBrightness: Brightness.light,
+    ));
   }
 
   @override
   void dispose() {
     _pageController.dispose();
     super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final currentIndex = ref.watch(navigationIndexProvider);
-    final pages = ref.watch(pagesProvider);
-    final navColors = ref.watch(navColorsProvider);
-    final navIcons = ref.watch(navIconsProvider);
-    final navLabels = ref.watch(navLabelsProvider);
-
-    return Scaffold(
-      body: PageView(
-        controller: _pageController,
-        physics: const BouncingScrollPhysics(),
-        onPageChanged: (index) {
-          ref.read(navigationIndexProvider.notifier).state = index;
-        },
-        children: pages,
-      ),
-
-      bottomNavigationBar: Stack(
-        alignment: Alignment.bottomCenter,
-        children: [
-          Container(
-            decoration: const BoxDecoration(
-              border: Border(
-                top: BorderSide(color: Colors.grey, width: 1),
-              ),
-            ),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 400),
-              curve: Curves.easeInOut,
-              color: navColors[currentIndex],
-              padding: const EdgeInsets.only(top: 6),
-              height: 115,
-              child: BottomNavigationBar(
-                currentIndex: currentIndex,
-                onTap: (int index) {
-                  ref.read(navigationIndexProvider.notifier).state = index;
-                  _pageController.animateToPage(
-                    index,
-                    duration: const Duration(milliseconds: 400),
-                    curve: Curves.easeOutCubic,
-                  );
-                },
-                elevation: 0,
-                backgroundColor: Colors.transparent,
-                selectedItemColor: const Color.fromARGB(255, 40, 86, 95),
-                unselectedItemColor: const Color.fromARGB(255, 137, 141, 144),
-                type: BottomNavigationBarType.fixed,
-                showSelectedLabels: true,
-                showUnselectedLabels: true,
-                items: List.generate(5, (index) {
-                  final icons = navIcons['icons']!;
-                  final activeIcons = navIcons['activeIcons']!;
-
-                  final isSelected = currentIndex == index;
-
-                  return BottomNavigationBarItem(
-                    icon: _BouncyIcon(
-                      icon: icons[index],
-                      activeIcon: activeIcons[index],
-                      isActive: isSelected,
-                    ),
-                    label: navLabels[index],
-                  );
-                }),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 3,
-            child: AnimatedAlign(
-              duration: const Duration(milliseconds: 400),
-              curve: Curves.easeOutBack,
-              alignment: _indicatorAlignment(currentIndex),
-              child: Container(
-                height: 5,
-                width: 24,
-                decoration: BoxDecoration(
-                  color: const Color.fromARGB(255, 91, 118, 176),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   Alignment _indicatorAlignment(int index) {
@@ -180,14 +95,109 @@ class _NavBarPageState extends ConsumerState<NavBarPage>
         return Alignment.center;
     }
   }
+
+  @override
+  Widget build(BuildContext context) {
+    final currentIndex = ref.watch(navigationIndexProvider);
+    final pages = ref.watch(pagesProvider);
+    final navIcons = ref.watch(navIconsProvider);
+
+    return Scaffold(
+      extendBody: true,
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          PageView(
+            controller: _pageController,
+            physics: const BouncingScrollPhysics(),
+            onPageChanged: (index) {
+              ref.read(navigationIndexProvider.notifier).state = index;
+            },
+            children: pages,
+          ),
+
+          // Glass Navbar with slide-in animation
+ AnimatedPositioned(
+  duration: const Duration(milliseconds: 600),
+  curve: Curves.easeOutCubic,
+  left: 16,
+  right: 16,
+  bottom: -25, // <- distance from bottom of screen (adjust as needed)
+  child: ClipRRect(
+    borderRadius: BorderRadius.circular(100), // fully rounded
+    child: BackdropFilter(
+      filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+      child: Container(
+        height: 122,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Colors.black.withOpacity(0.35),
+              Colors.black.withOpacity(0.25),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(50),
+          border: Border.all(color: Colors.white.withOpacity(0.12)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.cyanAccent.withOpacity(0.15),
+              blurRadius: 20,
+              spreadRadius: 1,
+            )
+          ],
+        ),
+        child: BottomNavigationBar(
+          currentIndex: currentIndex,
+          onTap: (int index) {
+            HapticFeedback.lightImpact();
+            ref.read(navigationIndexProvider.notifier).state = index;
+            _pageController.animateToPage(
+              index,
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeOutCubic,
+            );
+          },
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          selectedItemColor: Colors.white,
+          unselectedItemColor: Colors.white54,
+          type: BottomNavigationBarType.fixed,
+          showSelectedLabels: false,
+          showUnselectedLabels: false,
+          items: List.generate(5, (index) {
+            final icons = navIcons['icons']!;
+            final activeIcons = navIcons['activeIcons']!;
+            final isSelected = currentIndex == index;
+
+            return BottomNavigationBarItem(
+              icon: _GlassNavIcon(
+                icon: icons[index],
+                activeIcon: activeIcons[index],
+                isActive: isSelected,
+              ),
+              label: '',
+            );
+          }),
+        ),
+      ),
+    ),
+  ),
+),
+
+       ],
+      ),
+    );
+  }
 }
 
-class _BouncyIcon extends StatelessWidget {
+class _GlassNavIcon extends StatelessWidget {
   final IconData icon;
   final IconData activeIcon;
   final bool isActive;
 
-  const _BouncyIcon({
+  const _GlassNavIcon({
     required this.icon,
     required this.activeIcon,
     required this.isActive,
@@ -195,24 +205,26 @@ class _BouncyIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.0, end: isActive ? -10.0 : 0.0),
-      duration: const Duration(milliseconds: 600),
-      curve: Curves.elasticOut,
-      builder: (context, value, child) {
-        return Transform.translate(
-          offset: Offset(0, value),
-          child: Transform.scale(
-            scale: isActive ? 1.25 : 1.0,
-            child: Icon(
-              isActive ? activeIcon : icon,
-              color: isActive
-                  ? const Color.fromARGB(255, 6, 67, 188)
-                  : Colors.grey,
-            ),
-          ),
-        );
-      },
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: isActive
+            ? [
+                BoxShadow(
+                  color: Colors.cyanAccent.withOpacity(0.6),
+                  blurRadius: 8,
+                  spreadRadius: 1,
+                ),
+              ]
+            : [],
+      ),
+      child: Icon(
+        isActive ? activeIcon : icon,
+        color: isActive ? Colors.white : Colors.white54,
+        size: 28,
+      ),
     );
   }
 }

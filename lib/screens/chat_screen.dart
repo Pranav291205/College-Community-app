@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:community_app/screens/create_group_chat_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -343,58 +345,83 @@ class _ChatPageState extends ConsumerState<ChatPage>
     final chatGroupsAsync = ref.watch(chatGroupsProvider);
 
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(70),
-        child: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xff1A237E), Color(0xff3949AB), Color(0xff5C6BC0)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+      extendBodyBehindAppBar: true,
+
+  appBar: PreferredSize(
+    preferredSize: const Size.fromHeight(72),
+    child: TweenAnimationBuilder(
+      tween: Tween<double>(begin: -80, end: 0),
+      duration: const Duration(milliseconds: 600),
+      curve: Curves.easeOut,
+      builder: (context, value, child) {
+        return Transform.translate(
+          offset: Offset(0, value),
+          child: child,
+        );
+      },
+      child: ClipRRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.06),
+              border: Border(
+                bottom: BorderSide(
+                  color: Colors.white.withOpacity(0.15),
+                  width: 1.2,
+                ),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.blueAccent.withOpacity(0.10),
+                  blurRadius: 20,
+                  spreadRadius: 5,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-          ),
-          child: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            centerTitle: true,
-            title: const Text(
-              "Messages",
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 1.3,
-                color: Colors.white,
-                shadows: [
-                  Shadow(
-                    offset: Offset(1.5, 1.5),
-                    blurRadius: 3,
-                    color: Colors.black38,
+            child: AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              centerTitle: true,
+              title: ShaderMask(
+                shaderCallback: (bounds) => const LinearGradient(
+                  colors: [Colors.white, Color(0xFFDEE8FF)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ).createShader(bounds),
+                child: const Text(
+                  "Messages",
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    letterSpacing: 1.8,
                   ),
-                ],
+                ),
               ),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.search, size: 28, color: Colors.white),
+                  onPressed: _showUserSearchDialog,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add, size: 28, color: Colors.white),
+                 onPressed: () {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => const CreateGroupChatDialog(),
+    );
+  },
+                ),
+              ],
             ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.search, size: 28),
-                tooltip: 'Search Users',
-                onPressed: _showUserSearchDialog,
-              ),
-              IconButton(
-                icon: const Icon(Icons.add, size: 28),
-                tooltip: 'Create Group',
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const CreateGroupChatPage(),
-                    ),
-                  );
-                },
-              ),
-            ],
           ),
         ),
       ),
+    ),
+  ),
       body: Stack(
         children: [
           Stack(
@@ -405,9 +432,9 @@ class _ChatPageState extends ConsumerState<ChatPage>
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Color(0xff0A1128),
-                      Color(0xff001F54),
-                      Color(0xff034078),
+                      Color.fromARGB(255, 0, 0, 0),
+                      Color.fromARGB(255, 76, 48, 191),
+                      Color.fromARGB(255, 0, 0, 0),
                     ],
                   ),
                 ),
@@ -433,34 +460,59 @@ class _ChatPageState extends ConsumerState<ChatPage>
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.chat_outlined,
-                          size: 64,
-                          color: Colors.white30,
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          "No chats yet",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const CreateGroupChatPage(),
-                              ),
-                            );
-                          },
-                          icon: const Icon(Icons.add),
-                          label: const Text('Create Group'),
-                        ),
-                      ],
+  Icon(
+    Icons.chat_outlined,
+    size: 64,
+    color: Colors.white30,
+  ),
+  const SizedBox(height: 16),
+  const Text(
+    "No chats yet",
+    style: TextStyle(
+      color: Colors.white,
+      fontSize: 20,
+      fontWeight: FontWeight.w500,
+    ),
+  ),
+  const SizedBox(height: 24),
+  ElevatedButton.icon(
+    onPressed: () {
+      showGeneralDialog(
+        context: context,
+        barrierDismissible: true,
+        barrierLabel: "Create Group",
+        barrierColor: Colors.black.withOpacity(0.5), // dim background
+        transitionDuration: const Duration(milliseconds: 300),
+        pageBuilder: (context, anim1, anim2) {
+          return const Center(
+            child: CreateGroupChatDialog(),
+          );
+        },
+        transitionBuilder: (context, anim1, anim2, child) {
+          return FadeTransition(
+            opacity: anim1,
+            child: ScaleTransition(
+              scale: anim1,
+              child: child,
+            ),
+          );
+        },
+      );
+    },
+    icon: const Icon(Icons.add),
+    label: const Text('Create Group'),
+    style: ElevatedButton.styleFrom(
+      backgroundColor: Colors.lightBlueAccent,
+      foregroundColor: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+    ),
+  ),
+],
+
                     ),
                   );
                 }
@@ -503,6 +555,185 @@ class _ChatPageState extends ConsumerState<ChatPage>
                               ),
                             ],
                           ),
+                        child: ClipRRect(
+  borderRadius: BorderRadius.circular(20),
+  child: BackdropFilter(
+    filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+    child: Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color.fromARGB(255, 83, 47, 183).withOpacity(0.20),
+            const Color.fromARGB(255, 47, 12, 109).withOpacity(0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.30),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            blurRadius: 25,
+            spreadRadius: -5,
+            offset: const Offset(0, 6),
+            color: Colors.white.withOpacity(0.08),
+          ),
+        ],
+      ),
+      child: ListTile(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ChatDetailPage(
+                groupId: group.id,
+                chatId: '',
+                chatName: '',
+              ),
+            ),
+          );
+        },
+        onLongPress: () {
+          showModalBottomSheet(
+            context: context,
+            backgroundColor: Colors.black.withOpacity(0.8),
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            builder: (context) => Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: Icon(Icons.edit, color: Colors.blue[300]),
+                  title: const Text(
+                    'Rename Group',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showRenameDialog(group.id, group.chatName);
+                  },
+                ),
+                const Divider(color: Colors.grey, height: 1),
+                ListTile(
+                  leading: const Icon(Icons.people, color: Colors.blueAccent),
+                  title: const Text(
+                    'View Members',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            GroupMembersScreen(groupId: group.id, groupName: group.chatName),
+                      ),
+                    );
+                  },
+                ),
+                const Divider(color: Colors.grey, height: 1),
+                ListTile(
+                  leading: const Icon(Icons.exit_to_app, color: Colors.red),
+                  title: const Text(
+                    'Leave Group',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _leaveGroup(group.id, group.chatName);
+                  },
+                ),
+              ],
+            ),
+          );
+        },
+        leading: CircleAvatar(
+          radius: 28,
+          backgroundColor: Colors.blueAccent.withOpacity(0.85),
+          child: Text(
+            group.chatName.isNotEmpty
+                ? group.chatName[0].toUpperCase()
+                : 'G',
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ),
+        title: Text(
+          group.chatName,
+          style: const TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                lastSender.isNotEmpty ? "$lastSender: $lastMessage" : lastMessage,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 13,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  '👥 $memberCount members',
+                  style: const TextStyle(
+                    color: Colors.white60,
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        trailing: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              timeAgo,
+              style: const TextStyle(
+                color: Colors.white60,
+                fontSize: 11,
+              ),
+            ),
+            if (group.messages.isNotEmpty)
+              Container(
+                margin: const EdgeInsets.only(top: 6),
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.blueAccent.withOpacity(0.95),
+                  shape: BoxShape.circle,
+                ),
+                child: const Text(
+                  "1",
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    ),
+  ),
+),
+                       ),
                           child: Card(
                             elevation: 6,
                             color: Colors.blue.shade800.withOpacity(0.85),
@@ -764,7 +995,7 @@ class BubblePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.blueAccent.withOpacity(0.25)
+      ..color = const Color.fromARGB(255, 222, 221, 224).withOpacity(0.25)
       ..style = PaintingStyle.fill;
 
     for (var pos in bubblePositions) {

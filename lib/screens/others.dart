@@ -118,6 +118,10 @@ class _OthersScreenState extends ConsumerState<OthersScreen>
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
+            colors: [
+                Color.fromARGB(166, 18, 4, 143),  // 65% transparent gradient
+                Color.fromARGB(166, 63, 11, 126),
+              ],
               colors: [Color(0xff5B2C6F), Color(0xff6A1B9A), Color(0xff4A148C)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -132,6 +136,10 @@ class _OthersScreenState extends ConsumerState<OthersScreen>
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 colors: [
+                      Color.fromARGB(255, 0, 0, 0),
+                      Color.fromARGB(255, 76, 48, 191),
+                      Color.fromARGB(255, 0, 0, 0),
+                    ],
                   Color(0xff3E1E68),
                   Color(0xff2B1055),
                   Color(0xff120A2A),

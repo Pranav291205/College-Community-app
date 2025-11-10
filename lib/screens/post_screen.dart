@@ -190,13 +190,9 @@ class _PostScreenState extends ConsumerState<PostScreen> {
 
       final result = await postFormNotifier.submitPost();
 
-      print('📊 Submit result: $result');
-
       setState(() => _isLoading = false);
 
       if (result['success']) {
-        print('✅ Post created successfully!');
-
         _titleController.clear();
         _descriptionController.clear();
 
@@ -207,10 +203,7 @@ class _PostScreenState extends ConsumerState<PostScreen> {
         });
         
         ref.refresh(postsProvider);
-        print('🔄 All posts refreshed');
-
         ref.refresh(userPostsProvider);
-        print('🔄 User posts refreshed');
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -223,8 +216,6 @@ class _PostScreenState extends ConsumerState<PostScreen> {
         }
       } else {
         String errorMsg = result['message'] ?? 'Failed to create post';
-        print('❌ Error: $errorMsg');
-
         setState(() => _error = errorMsg);
 
         if (mounted) {
@@ -237,7 +228,6 @@ class _PostScreenState extends ConsumerState<PostScreen> {
         }
       }
     } catch (e) {
-      print('❌ Exception: $e');
       setState(() {
         _error = 'Error: $e';
         _isLoading = false;
@@ -261,11 +251,10 @@ class _PostScreenState extends ConsumerState<PostScreen> {
     print('🔍 PostScreen build - Token: ${token?.substring(0, 20) ?? "null"}...');
 
     if (token == null || token.isEmpty) {
-      print('❌ Not logged in - showing login prompt');
       return Scaffold(
         appBar: AppBar(
           title: const Text('Create Post'),
-          backgroundColor: Colors.blue,
+          backgroundColor: const Color.fromARGB(255, 76, 44, 192),
         ),
         body: Center(
           child: Column(
@@ -289,35 +278,25 @@ class _PostScreenState extends ConsumerState<PostScreen> {
       );
     }
 
-    print('✅ Logged in - showing post form');
-
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(70),
         child: ClipRRect(
-          borderRadius: const BorderRadius.only(
-            bottomLeft: Radius.circular(0),
-            bottomRight: Radius.circular(0),
-          ),
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
             child: Container(
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.white.withOpacity(0.2),
+                    Colors.white.withOpacity(0.1)
+                  ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [
-                    Color.fromARGB(255, 7, 63, 126),
-                    Color(0xFF6FB1FC),
-                  ],
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
-                    blurRadius: 6,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
+                border: Border.all(
+                    color: Colors.white.withOpacity(0.2), width: 1.0),
               ),
               child: const Center(
                 child: AnimatedShimmerText(
@@ -331,11 +310,31 @@ class _PostScreenState extends ConsumerState<PostScreen> {
           ),
         ),
       ),
-      body: Stack(
-        children: [
-          const Positioned.fill(
-            child: AnimatedGradientBackground(),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+                      Color.fromARGB(255, 0, 0, 0),
+                      Color.fromARGB(255, 76, 48, 191),
+                      Color.fromARGB(255, 0, 0, 0),
+                    ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (_error != null) ...[
+                _glassBox(
+                  child: Row(
+                    children: [
+                     
+                      
+                      
+                    ],
 
           SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -381,12 +380,96 @@ class _PostScreenState extends ConsumerState<PostScreen> {
                     fillColor: Colors.grey[50],
                     counterText: '${_titleController.text.length}/100',
                   ),
-                  maxLength: 100,
-                  enabled: !_isLoading,
-                  onChanged: (value) => setState(() {}),
+                  borderColor: Colors.red.shade300,
+                  bgColor: const Color.fromARGB(255, 216, 207, 223).withOpacity(0.2),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 60),
+              ],
 
+              const Text('Title',
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white)),
+              const SizedBox(height: 10),
+              _glassTextField(
+                controller: _titleController,
+                hint: 'What\'s on your mind?',
+                icon: Icons.title,
+                maxLength: 100,
+                maxLines: 1,
+              ),
+              const SizedBox(height: 5),
+
+              const Text('Description',
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white)),
+              const SizedBox(height: 8),
+              _glassTextField(
+                controller: _descriptionController,
+                hint: 'Tell us more...',
+                icon: Icons.description,
+                maxLength: 500,
+                maxLines: 5,
+              ),
+              const SizedBox(height: 16),
+
+              const Text('Category',
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white)),
+              const SizedBox(height: 8),
+              _glassTextField(
+                controller: _categoryController,
+                hint: 'e.g., Academic, Events, General...',
+                icon: Icons.category,
+                maxLines: 1,
+              ),
+              const SizedBox(height: 16),
+
+              if (_mediaFile != null) ...[
+                const Text('Media Preview',
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white)),
+                const SizedBox(height: 8),
+                Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.file(
+                        _mediaFile!,
+                        height: 200,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: GestureDetector(
+                        onTap: _isLoading
+                            ? null
+                            : () => setState(() => _mediaFile = null),
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          padding: const EdgeInsets.all(8),
+                          child: const Icon(
+                            Icons.close,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 const Text(
                   'Description',
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
@@ -424,24 +507,37 @@ class _PostScreenState extends ConsumerState<PostScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
+              ],
 
-                if (_mediaFile != null) ...[
-                  const Text(
-                    'Media Preview',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Stack(
+              GestureDetector(
+                onTap: _isLoading ? null : _pickImage,
+                child: _glassBox(
+                  child: Row(
                     children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.file(
-                          _mediaFile!,
-                          height: 200,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade100.withOpacity(0.4),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.add_photo_alternate,
+                          color: Colors.blue.shade700,
+                          size: 22,
                         ),
                       ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _mediaFile == null ? 'Add Photo' : 'Change Photo',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
                       Positioned(
                         top: 8,
                         right: 8,
@@ -452,17 +548,31 @@ class _PostScreenState extends ConsumerState<PostScreen> {
                               color: Colors.red,
                               shape: BoxShape.circle,
                             ),
-                            padding: const EdgeInsets.all(8),
-                            child: const Icon(
-                              Icons.close,
-                              color: Colors.white,
-                              size: 20,
+                            Text(
+                              'Choose from gallery',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.white70,
+                              ),
                             ),
-                          ),
+                          ],
                         ),
                       ),
                     ],
                   ),
+                ),
+              ),
+              const SizedBox(height: 32),
+
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _submitPost,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 100, 32, 195),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
                   const SizedBox(height: 16),
                 ],
 
@@ -478,19 +588,27 @@ class _PostScreenState extends ConsumerState<PostScreen> {
                       borderRadius: BorderRadius.circular(12),
                       color: Colors.blue.shade50,
                     ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.shade100,
-                            shape: BoxShape.circle,
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2.5,
                           ),
-                          child: Icon(
-                            Icons.add_photo_alternate,
-                            color: Colors.blue.shade700,
-                            size: 22,
-                          ),
+                        )
+                      : const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.send, color: Colors.white),
+                            SizedBox(width: 8),
+                            Text(
+                              'Post Now',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
                         ),
                         const SizedBox(width: 16),
                         Expanded(
@@ -512,57 +630,15 @@ class _PostScreenState extends ConsumerState<PostScreen> {
                                   color: Colors.blue.shade700,
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 32),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _submitPost,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2.5,
                             ),
-                          )
-                        : const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.send, color: Colors.white),
-                              SizedBox(width: 8),
-                              Text(
-                                'Post Now',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                  ),
+                          ],
+                        ),
                 ),
-                const SizedBox(height: 20),
-              ],
-            ),
+              ),
+              const SizedBox(height: 250),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -588,39 +664,52 @@ class _AnimatedGradientBackgroundState extends State<AnimatedGradientBackground>
       vsync: this,
     )..repeat(reverse: true);
 
-    _alignmentAnimation = Tween<Alignment>(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    ).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+  // Glassmorphic container helper
+  Widget _glassBox({
+    required Widget child,
+    Color bgColor = Colors.white24,
+    Color borderColor = Colors.white24,
+  }) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: borderColor, width: 1.0),
+          ),
+          child: child,
+        ),
+      ),
     );
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        return Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: _alignmentAnimation.value,
-              end: Alignment.center,
-              colors: [
-                Colors.blue.shade300,
-                Colors.blue.shade500,
-                Colors.blue.shade700,
-              ],
-            ),
-          ),
-        );
-      },
+  Widget _glassTextField({
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    int maxLength = 100,
+    int maxLines = 1,
+  }) {
+    return _glassBox(
+      child: TextField(
+        controller: controller,
+        maxLength: maxLength,
+        maxLines: maxLines,
+        style: const TextStyle(color: Colors.white),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
+          prefixIcon: Icon(icon, color: Colors.white70),
+          border: InputBorder.none,
+          counterText: '',
+        ),
+      ),
+      bgColor: const Color.fromARGB(255, 72, 13, 159).withOpacity(0.1),
+      borderColor: Colors.white.withOpacity(0.3),
     );
   }
 }
@@ -673,7 +762,7 @@ class _AnimatedShimmerTextState extends State<AnimatedShimmerText>
               begin: Alignment(-1.0 + _controller.value * 2, 0),
               end: Alignment(1.0 + _controller.value * 2, 0),
               colors: [
-                Colors.white,
+                const Color.fromARGB(255, 246, 241, 241),
                 Colors.blue.shade100,
                 Colors.white,
               ],
